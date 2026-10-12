@@ -1,34 +1,46 @@
 # 杨鹏博 · 个人主页
 
-一个以清晨山野和个人手记为灵感的静态主页。使用原生 HTML、CSS 和 JavaScript，原创 SVG 插画，无第三方字体、CDN、框架或构建依赖。
+纯静态、零依赖的个人主页：深色 + 青紫渐变、玻璃拟态，以及一整套丝滑的滚动动画。
 
-包含关于我、兴趣、近况；平滑锚点跳转、滚动显现、轻量背景视差、阅读进度；适配移动端与减少动态效果的系统设置。没有添加未经提供的社交账号、联系方式或技能。
+**在线地址：<https://csypb123.github.io/>**
+
+## 文件结构
+
+| 文件 | 说明 |
+| --- | --- |
+| `index.html` | 页面结构：首页 / 关于我 / 兴趣 / 近况 / 联系 |
+| `styles.css` | 全部样式，配色集中在顶部 `:root` |
+| `script.js` | 滚动动画与交互（原生 JS，无第三方库） |
+| `assets/favicon.svg` | 站点图标 |
+| `assets/landscape.svg` | 首页个人卡片里的「风景窗」插画 |
+| `.nojekyll` | 让 GitHub Pages 跳过 Jekyll 处理 |
+| `preview-server.cjs` | 本地预览用的零依赖静态服务器 |
 
 ## 本地预览
-
-安装了 Node.js 时，在本目录运行：
 
 ```sh
 node preview-server.cjs
 ```
 
-打开 http://127.0.0.1:4173。也可以直接双击 `index.html`。
+打开 <http://127.0.0.1:4173>，也可以直接双击 `index.html`。
 
-## 发布到 GitHub Pages
+## 部署
 
-1. 在你的 GitHub 账户下创建公开仓库，例如 `personal-homepage`。
-2. 将本项目推送到该仓库的 `main` 分支，包括 `.github/workflows/deploy.yml`。
-3. 仓库 Settings → Pages → Build and deployment → Source 选择 **GitHub Actions**。
-4. 在 Actions 中查看 `Deploy personal homepage to GitHub Pages`。首次部署若因 Pages 未启用失败，在完成第 3 步后重新运行工作流。
-5. 部署成功后访问 `https://你的用户名.github.io/personal-homepage/`。若仓库名为 `你的用户名.github.io`，则访问 `https://你的用户名.github.io/`。
+推送到 `main` 分支即自动发布，工作流见 `.github/workflows/deploy.yml`
+（GitHub Actions → `actions/deploy-pages`），通常 1–3 分钟生效。
 
-页面使用相对路径，两种仓库形式都支持。后续更新推送到 `main` 后会自动部署。
+若工作流的发布步骤报错，把仓库 **Settings → Pages → Source** 改成
+**Deploy from a branch**（分支 `main`、目录 `/ (root)`）也能直接发布根目录内容。
 
-## 修改文案与样式
+## 自定义
 
-- `index.html`：个人文案、页面结构和 SEO 描述。
-- `styles.css`：颜色、排版和响应式布局。
-- `script.js`：滚动动画与导航状态。
-- `assets/landscape.svg`：原创山湖背景。
+- **文字**：改 `index.html`
+- **配色**：改 `styles.css` 里 `:root` 的 `--bg` / `--cyan` / `--violet` / `--pink`
+- **打字机文案**：改 `script.js` 里的 `lines` 数组
+- **头像**：改 `index.html` 中 `.profile__avatar img` 的 `src`
+- **动画节奏**：HTML 上的 `data-delay="80"`（毫秒）控制各区块入场先后
 
-公开发布前请确认文案可以公开。GitHub 凭据应仅用于认证，切勿写入源码或提交到仓库。
+## 无障碍
+
+已适配 `prefers-reduced-motion`：系统开启「减少动态效果」时，
+所有入场动画与视差会关闭，内容直接呈现。

@@ -1,63 +1,392 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#edf0e9">
-  <meta name="description" content="你好，我是杨鹏博，沈阳理工大学计算机科学与技术专业的大一新生。正在学习，正在探索，在这里记录兴趣与成长。">
-  <meta property="og:title" content="杨鹏博 · 正在探索">
-  <meta property="og:description" content="正在学习，正在探索。带着好奇心，慢慢成为自己。">
-  <meta property="og:type" content="website">
-  <title>杨鹏博 · 正在探索</title>
-  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css">
-  <script src="./script.js" defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>杨鹏博 · 个人主页</title>
+<meta name="description" content="你好，我是杨鹏博，沈阳理工大学计算机科学与技术专业大一学生。正在认真打基础、不断尝试，持续更新中。">
+<meta name="author" content="杨鹏博">
+<meta name="theme-color" content="#070a14">
+
+<!-- Open Graph / 分享卡片 -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="杨鹏博 · 个人主页">
+<meta property="og:description" content="计算机科学与技术 · 大一在读。正在学习，正在探索，持续更新中。">
+<meta property="og:image" content="https://avatars.githubusercontent.com/u/319321990?v=4">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./assets/favicon.svg">
+
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <a class="skip-link" href="#about">跳到主要内容</a>
-  <div class="reading-progress" aria-hidden="true"></div>
-  <header class="site-header">
-    <a class="wordmark" href="#home" aria-label="杨鹏博，返回首页"><span class="brand-icon">y<span>.</span></span><span>杨鹏博<span class="wordmark-sub">PERSONAL FIELD NOTES</span></span></a>
-    <nav aria-label="主导航"><a href="#about">关于</a><a href="#interests">兴趣</a><a href="#now">近况</a></nav>
-    <span class="header-note"><i class="status-dot"></i> 保持好奇</span>
-  </header>
-  <main>
-    <section class="hero" id="home" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <div class="eyebrow hero-intro"><span class="tiny-star">✳</span> HELLO, WORLD. I'M PENGBO</div>
-        <h1 id="hero-title">在探索中，<br>慢慢<span class="serif-emphasis">成为自己</span><span class="title-period">。</span></h1>
-        <p class="hero-description">你好，我是杨鹏博。<br>一名计算机专业新生，一个对世界保持好奇的人。</p>
-        <a class="primary-link" href="#about">从这里认识我 <span aria-hidden="true">↗</span></a>
-        <div class="hero-footnote"><span>01 / A NEW CHAPTER</span><span>学习 · 生活 · 一点想象力</span></div>
+
+<!-- 加载动画 -->
+<div id="preloader" class="preloader">
+  <div class="preloader__ring"></div>
+  <p class="preloader__text">正在加载……</p>
+</div>
+
+<!-- 顶部滚动进度条 -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- 背景装饰 -->
+<div class="backdrop" aria-hidden="true">
+  <div class="backdrop__grid"></div>
+  <div class="backdrop__blob backdrop__blob--1"></div>
+  <div class="backdrop__blob backdrop__blob--2"></div>
+  <div class="backdrop__blob backdrop__blob--3"></div>
+  <div class="backdrop__noise"></div>
+</div>
+
+<!-- 导航 -->
+<header class="nav" id="nav">
+  <div class="nav__inner">
+    <a class="brand" href="#home">
+      <span class="brand__mark">杨</span>
+      <span class="brand__text">杨鹏博<em>.dev</em></span>
+    </a>
+
+    <nav class="nav__links" id="navLinks" aria-label="主导航">
+      <a href="#home">首页</a>
+      <a href="#about">关于我</a>
+      <a href="#interests">兴趣</a>
+      <a href="#now">近况</a>
+      <a href="#contact">联系</a>
+      <span class="nav__pill" id="navPill" aria-hidden="true"></span>
+    </nav>
+
+    <button class="nav__toggle" id="navToggle" aria-label="打开菜单" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ 首屏 ============ -->
+  <section class="hero" id="home">
+    <div class="hero__glow" aria-hidden="true"></div>
+
+    <div class="hero__inner container">
+      <div class="hero__text" data-parallax="0.18">
+        <p class="hero__eyebrow reveal" data-delay="0">
+          <span class="dot"></span> 沈阳理工大学 · 计算机科学与技术
+        </p>
+
+        <h1 class="hero__title">
+          <span class="hero__greet reveal" data-delay="0">你好，我是</span>
+          <span class="grad-text" data-split data-delay="120">杨鹏博</span>
+        </h1>
+
+        <p class="hero__subtitle reveal" data-delay="160">
+          <span id="typed" class="typed"></span><span class="caret" aria-hidden="true"></span>
+        </p>
+
+        <p class="hero__desc reveal" data-delay="240">
+          现在的我还没有特别擅长的技术，但正处在认真打基础、不断尝试的阶段。
+          希望在接下来的学习与实践中，慢慢找到自己真正感兴趣、愿意长期投入的方向。
+        </p>
+
+        <div class="hero__actions reveal" data-delay="320">
+          <a class="btn btn--primary" href="#about">
+            <span>了解我</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn btn--ghost" href="https://github.com/csypb123" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg>
+            <span>GitHub</span>
+          </a>
+        </div>
+
+        <ul class="hero__facts reveal" data-delay="400">
+          <li>
+            <strong class="count" data-count="1" data-suffix="">0</strong>
+            <span>大一在读</span>
+          </li>
+          <li>
+            <strong class="count" data-count="4" data-suffix="+">0</strong>
+            <span>喜爱作品</span>
+          </li>
+          <li>
+            <strong class="count" data-count="100" data-suffix="%">0</strong>
+            <span>持续更新</span>
+          </li>
+        </ul>
       </div>
-      <div class="hero-art">
-        <div class="landscape-window"><img class="landscape" src="./assets/landscape.svg" alt="清晨的山峰、森林与湖泊，太阳升起在薄雾之中" fetchpriority="high" width="1000" height="1200"><div class="landscape-shade"></div><div class="landscape-caption"><span>THE WORLD IS STILL<br>FULL OF POSSIBILITIES.</span><span class="caption-mark" aria-hidden="true">✳</span></div></div>
-        <span class="orbit-note">STAY CURIOUS · KEEP EXPLORING</span>
-        <div class="floating-note"><span class="note-icon" aria-hidden="true">↗</span><div>下一站，未知<span>而未知，正是开始的理由。</span></div></div>
+
+      <div class="hero__card reveal" data-delay="200" data-parallax="-0.1">
+        <div class="glass profile">
+          <div class="profile__avatar">
+            <div class="profile__ring"></div>
+            <img src="https://avatars.githubusercontent.com/u/319321990?v=4"
+                 alt="杨鹏博的头像" width="132" height="132" loading="eager"
+                 onerror="this.classList.add('is-fallback')">
+            <span class="profile__badge" title="在读学生">🎓</span>
+          </div>
+          <h3 class="profile__name">杨鹏博 <small>Yang Pengbo</small></h3>
+          <p class="profile__meta">浙江台州 → 辽宁沈阳</p>
+
+          <figure class="profile__pane">
+            <img src="./assets/landscape.svg" alt="晨雾中的山峰、湖泊与松林" width="1000" height="1200" loading="lazy">
+            <span class="profile__pane-shade" aria-hidden="true"></span>
+            <figcaption>下一站，未知</figcaption>
+          </figure>
+
+          <div class="profile__tags">
+            <span>计算机科学与技术</span>
+            <span>大一</span>
+            <span>番剧爱好者</span>
+            <span>游戏玩家</span>
+          </div>
+          <div class="profile__status">
+            <span class="pulse"></span> 正在学习 · 正在探索
+          </div>
+        </div>
       </div>
-      <a href="#about" class="scroll-hint"><span class="scroll-line" aria-hidden="true"></span> SCROLL TO EXPLORE <span aria-hidden="true">↓</span></a>
-    </section>
-    <div class="location-strip"><span><i class="status-dot"></i> 正在学习，正在探索</span><span>祖籍 · 台州 <span class="route" aria-hidden="true">────── →</span> 就读 · 沈阳</span><span class="strip-end">一段新的旅程 / 2026</span></div>
-    <section class="about section" id="about" aria-labelledby="about-title">
-      <div class="section-heading reveal"><div class="eyebrow">01 / ABOUT ME</div><h2 id="about-title">故事，才刚刚开始<span>。</span></h2><p>不急着定义自己，先认真走好每一步。</p></div>
-      <div class="about-grid">
-        <article class="about-story reveal"><span class="small-label">一点自我介绍</span><h3>祖籍浙江台州，<br>在沈阳开启新章节。</h3><p>我是杨鹏博，祖籍浙江台州，目前就读于<span class="text-accent">沈阳理工大学计算机科学与技术专业</span>，是一名大一新生。</p><p>现在的我还没有特别擅长的技术，但正处在认真打基础、不断尝试的阶段。我希望在接下来的学习与实践中，慢慢找到自己真正感兴趣、愿意长期投入的方向。</p><div class="handwritten">给成长一点时间。<span aria-hidden="true">↗</span></div></article>
-        <div class="about-aside reveal"><div class="identity-card"><div class="card-top"><span>EXPLORER'S CARD</span><span aria-hidden="true">↗</span></div><div class="monogram" aria-hidden="true">ypb<span>✳</span></div><h3>杨鹏博</h3><p>PENGBO YANG</p><dl><div><dt>坐标</dt><dd>中国 · 沈阳</dd></div><div><dt>身份</dt><dd>计算机专业 / 大一</dd></div><div><dt>当前状态</dt><dd><i class="status-dot"></i> 成长进行时</dd></div></dl><div class="card-bottom">NO. 001 <span>无限可能，尚待解锁</span></div></div><p class="aside-caption">不用一下子很厉害，<br>今天比昨天多懂一点，也很好。</p></div>
+    </div>
+
+    <a class="scroll-hint" href="#about" aria-label="向下滚动">
+      <span class="scroll-hint__mouse"><i></i></span>
+      <span class="scroll-hint__text">向下滚动</span>
+    </a>
+  </section>
+
+  <!-- ============ 关于我 ============ -->
+  <section class="section" id="about">
+    <div class="container">
+      <header class="section__head reveal">
+        <span class="section__index">01</span>
+        <h2 class="section__title grad-text">关于我</h2>
+        <p class="section__sub">About Me</p>
+      </header>
+
+      <div class="about">
+        <div class="glass about__card reveal" data-delay="80">
+          <p>
+            你好，我是<strong>杨鹏博</strong>，祖籍<strong>浙江台州</strong>，目前就读于
+            <strong>沈阳理工大学</strong>计算机科学与技术专业，是一名大一新生。
+          </p>
+          <p>
+            现在的我还没有特别擅长的技术，但正处在<strong>认真打基础、不断尝试</strong>的阶段。
+            我希望在接下来的学习与实践中，慢慢找到自己真正感兴趣、愿意长期投入的方向。
+          </p>
+          <p class="about__quote">
+            “慢慢来，比较快。” —— 愿每一步都算数。
+          </p>
+        </div>
+
+        <div class="about__side">
+          <article class="glass info-card reveal" data-delay="140">
+            <span class="info-card__icon">📍</span>
+            <h4>家乡</h4>
+            <p>浙江 · 台州</p>
+          </article>
+          <article class="glass info-card reveal" data-delay="200">
+            <span class="info-card__icon">🏫</span>
+            <h4>学校</h4>
+            <p>沈阳理工大学</p>
+          </article>
+          <article class="glass info-card reveal" data-delay="260">
+            <span class="info-card__icon">💻</span>
+            <h4>专业</h4>
+            <p>计算机科学与技术</p>
+          </article>
+          <article class="glass info-card reveal" data-delay="320">
+            <span class="info-card__icon">🌱</span>
+            <h4>阶段</h4>
+            <p>大一 · 打基础</p>
+          </article>
+        </div>
       </div>
-    </section>
-    <section class="interests section" id="interests" aria-labelledby="interests-title">
-      <div class="section-heading reveal"><div class="eyebrow">02 / LITTLE JOYS</div><h2 id="interests-title">课本之外的小宇宙<span>。</span></h2><p>有时在故事里休息，有时在另一段旅程里找到灵感。</p></div>
-      <div class="interest-grid">
-        <article class="interest-card anime-card reveal"><div class="interest-header"><span class="small-label">01 / ANIME</span><span class="round-icon" aria-hidden="true">♫</span></div><div class="anime-visual" aria-hidden="true"><div class="record"><div class="record-center">SIDE A<br><span>青春的音量</span></div></div><div class="sound-lines"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="visual-label">STORIES THAT STAY.</span></div><h3>在故事里，<br>遇见另一种可能。</h3><p>番剧是日常的一处小小避风港，也是想象力悄悄生长的地方。</p><ul class="tags" aria-label="喜欢的番剧"><li>孤独摇滚</li><li>魔女之旅</li><li>还有更多…</li></ul></article>
-        <article class="interest-card game-card reveal"><div class="interest-header"><span class="small-label">02 / GAMES</span><span class="round-icon" aria-hidden="true">✧</span></div><div class="game-visual" aria-hidden="true"><div class="pixel-heart"><svg viewBox="0 0 15 13"><path d="M1 1h5v2h3V1h5v2h1v5h-2v2h-2v2H9v1H6v-1H4v-2H2V8H0V3h1Z"/></svg></div><div class="game-orbit"></div><span class="game-star star-one">✧</span><span class="game-star star-two">✧</span><span class="visual-label">STAY DETERMINED.</span></div><h3>按下开始，<br>奔赴新的冒险。</h3><p>在虚拟世界里放松，也把故事带来的灵感和想象力带回生活。</p><ul class="tags" aria-label="喜欢的游戏"><li>崩坏3</li><li>崩坏：星穹铁道</li><li>Undertale</li><li>精灵与萤火意志</li></ul></article>
+
+      <!-- 时间线 -->
+      <div class="timeline reveal" data-delay="120">
+        <div class="timeline__line" aria-hidden="true"><i id="timelineFill"></i></div>
+        <ol class="timeline__list">
+          <li class="timeline__item reveal" data-delay="80">
+            <span class="timeline__dot"></span>
+            <h4>从浙江台州出发</h4>
+            <p>在南方小城长大，喜欢安静的夜晚和屏幕里的故事。</p>
+          </li>
+          <li class="timeline__item reveal" data-delay="160">
+            <span class="timeline__dot"></span>
+            <h4>考入沈阳理工大学</h4>
+            <p>跨越两千多公里，来到沈阳，开启计算机科学与技术的学习。</p>
+          </li>
+          <li class="timeline__item reveal" data-delay="240">
+            <span class="timeline__dot"></span>
+            <h4>认真打基础 · 现在</h4>
+            <p>学习编程基础，尝试各种小项目，记录自己的成长轨迹。</p>
+          </li>
+          <li class="timeline__item timeline__item--next reveal" data-delay="320">
+            <span class="timeline__dot"></span>
+            <h4>寻找长期方向</h4>
+            <p>希望找到真正感兴趣、愿意长期投入的方向。 —— 持续更新中</p>
+          </li>
+        </ol>
       </div>
-      <p class="interest-afterword reveal"><span aria-hidden="true">✳</span> 总有一些热爱，让平凡的日子闪闪发光。</p>
-    </section>
-    <section class="now section" id="now" aria-labelledby="now-title">
-      <div class="now-card reveal"><div class="now-copy"><div class="eyebrow"><i class="status-dot"></i> 03 / NOW & NEXT</div><h2 id="now-title">正在学习，正在探索。<br><span>持续更新中</span><span class="animated-dots" aria-hidden="true">…</span></h2><p>认真打好基础，把好奇变成一次次尝试。<br>方向还在寻找，脚步已经开始。</p><div class="now-tags"><span>学习基础知识</span><span>尝试新的事物</span><span>慢慢积累</span></div></div><div class="growth-art" aria-hidden="true"><svg viewBox="0 0 220 240" fill="none"><ellipse cx="110" cy="204" rx="78" ry="13" fill="currentColor" opacity=".08"/><path d="M110 200V85M110 163C54 163 47 123 51 104c48 1 61 28 59 59ZM110 130c48 0 66-31 59-53-40 0-61 27-59 53ZM110 97C83 95 72 75 78 54c25 3 34 20 32 43Z" stroke="currentColor" stroke-width="2"/><circle cx="110" cy="202" r="5" fill="currentColor"/><path d="M174 40v20m-10-10h20M40 72v12m-6-6h12" stroke="currentColor" stroke-width="1.5"/><path d="M80 222h60" stroke="currentColor" opacity=".4"/></svg><span>GROW AT YOUR OWN PACE</span></div></div>
-    </section>
-    <section class="hello section reveal" aria-labelledby="hello-title"><div class="eyebrow">NICE TO MEET YOU</div><h2 id="hello-title">很高兴，在这里遇见你<span>。</span></h2><p>如果你也喜欢这些故事和游戏，<br class="mobile-break">希望我们有机会交换灵感，聊聊热爱。</p><a href="#home" class="back-home">再逛一遍 <span aria-hidden="true">↑</span></a></section>
-  </main>
-  <footer><a class="footer-brand" href="#home">ypb<span>.</span></a><p>© <span id="year">2026</span> 杨鹏博 <span class="footer-divider">/</span> 用好奇心，书写下一页。</p><a href="#home">BACK TO TOP <span aria-hidden="true">↗</span></a></footer>
+    </div>
+  </section>
+
+  <!-- ============ 兴趣 ============ -->
+  <section class="section" id="interests">
+    <div class="container">
+      <header class="section__head reveal">
+        <span class="section__index">02</span>
+        <h2 class="section__title grad-text">兴趣</h2>
+        <p class="section__sub">Interests</p>
+      </header>
+
+      <p class="section__lead reveal" data-delay="80">
+        这些作品是我放松的方式，也常常给我带来灵感和想象力。
+      </p>
+
+      <div class="interest">
+        <div class="interest__col">
+          <h3 class="interest__label reveal">📺 番剧</h3>
+          <div class="cards">
+            <article class="glass card reveal" data-delay="80" data-tilt>
+              <div class="card__glow" style="--c1:#ff7ac6; --c2:#7a5cff"></div>
+              <h4>孤独摇滚！</h4>
+              <p class="card__en">BOCCHI THE ROCK!</p>
+              <p class="card__desc">社恐少女的一把吉他，把「不擅长」也弹成了热爱。</p>
+              <span class="card__tag">音乐 · 青春</span>
+            </article>
+
+            <article class="glass card reveal" data-delay="160" data-tilt>
+              <div class="card__glow" style="--c1:#7ee8fa; --c2:#8f6bff"></div>
+              <h4>魔女之旅</h4>
+              <p class="card__en">Wandering Witch</p>
+              <p class="card__desc">灰之魔女走过许多国家，我看见的是「世界的多样性」。</p>
+              <span class="card__tag">奇幻 · 旅行</span>
+            </article>
+          </div>
+        </div>
+
+        <div class="interest__col">
+          <h3 class="interest__label reveal">🎮 游戏</h3>
+          <div class="cards">
+            <article class="glass card reveal" data-delay="80" data-tilt>
+              <div class="card__glow" style="--c1:#59c2ff; --c2:#a05cff"></div>
+              <h4>崩坏 3</h4>
+              <p class="card__en">Honkai Impact 3rd</p>
+              <p class="card__desc">为世界上所有的美好而战，也是我最早学会「坚持」的地方。</p>
+              <span class="card__tag">动作 · 剧情</span>
+            </article>
+
+            <article class="glass card reveal" data-delay="160" data-tilt>
+              <div class="card__glow" style="--c1:#8b7cff; --c2:#ffd166"></div>
+              <h4>崩坏：星穹铁道</h4>
+              <p class="card__en">Honkai: Star Rail</p>
+              <p class="card__desc">坐上星穹列车，一站一站地看宇宙，也一站一站地看故事。</p>
+              <span class="card__tag">回合制 · 银河</span>
+            </article>
+
+            <article class="glass card reveal" data-delay="240" data-tilt>
+              <div class="card__glow" style="--c1:#ff5f6d; --c2:#ffc371"></div>
+              <h4>Undertale</h4>
+              <p class="card__en">UNDERTALE</p>
+              <p class="card__desc">「你可以不战斗。」——它让我第一次认真思考游戏里的选择。</p>
+              <span class="card__tag">像素 · 叙事</span>
+            </article>
+
+            <article class="glass card reveal" data-delay="320" data-tilt>
+              <div class="card__glow" style="--c1:#43e97b; --c2:#38f9d7"></div>
+              <h4>精灵与萤火意志</h4>
+              <p class="card__en">Ori and the Will of the Wisps</p>
+              <p class="card__desc">手绘的森林、钢琴的旋律，美到会让人停下来只想看着光。</p>
+              <span class="card__tag">平台跳跃 · 美术</span>
+            </article>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 近况 ============ -->
+  <section class="section" id="now">
+    <div class="container">
+      <header class="section__head reveal">
+        <span class="section__index">03</span>
+        <h2 class="section__title grad-text">近况</h2>
+        <p class="section__sub">Now</p>
+      </header>
+
+      <div class="now">
+        <div class="glass now__main reveal" data-delay="80">
+          <h3>正在学习，正在探索，持续更新中。</h3>
+          <p>
+            大学第一年，我把大部分时间花在打基础和尝试上：学编程、做点小东西、
+            看看别人怎么把想法变成作品。也欢迎同好交流。
+          </p>
+          <div class="now__bars">
+            <div class="bar reveal" data-delay="120">
+              <span class="bar__label">学习编程基础</span><span class="bar__track"><i style="--w:68%"></i></span>
+            </div>
+            <div class="bar reveal" data-delay="180">
+              <span class="bar__label">尝试小项目</span><span class="bar__track"><i style="--w:52%"></i></span>
+            </div>
+            <div class="bar reveal" data-delay="240">
+              <span class="bar__label">寻找长期方向</span><span class="bar__track"><i style="--w:38%"></i></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="now__list">
+          <article class="glass tick reveal" data-delay="120">
+            <span class="tick__icon">📚</span>
+            <div><h4>在学习</h4><p>C 语言与计算机基础，慢慢把地基打稳。</p></div>
+          </article>
+          <article class="glass tick reveal" data-delay="180">
+            <span class="tick__icon">🧪</span>
+            <div><h4>在尝试</h4><p>各种小练习和小项目，先做出来，再做好。</p></div>
+          </article>
+          <article class="glass tick reveal" data-delay="240">
+            <span class="tick__icon">✨</span>
+            <div><h4>在记录</h4><p>把这个主页当成自己的第一个长期项目。</p></div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 联系 ============ -->
+  <section class="section section--contact" id="contact">
+    <div class="container">
+      <div class="glass contact reveal">
+        <p class="contact__eyebrow">很高兴认识你</p>
+        <h2 class="grad-text">也欢迎同好交流</h2>
+        <p class="contact__desc">无论是番剧、游戏，还是学习路上的问题，都可以来找我聊聊。</p>
+        <div class="contact__actions">
+          <a class="btn btn--primary" href="https://github.com/csypb123" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg>
+            <span>github.com/csypb123</span>
+          </a>
+          <a class="btn btn--ghost" href="#home">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+            <span>回到顶部</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container footer__inner">
+    <p>© <span id="year">2025</span> 杨鹏博 · 用 HTML / CSS / JS 手写</p>
+    <p class="footer__hint">沈阳理工大学 · 计算机科学与技术</p>
+  </div>
+</footer>
+
+<!-- 回到顶部 -->
+<button class="to-top" id="toTop" aria-label="回到顶部">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+</button>
+
+<script src="script.js"></script>
 </body>
 </html>
