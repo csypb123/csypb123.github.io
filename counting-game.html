@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>数一数 · 限时计数小游戏</title>
+<style>
+  :root{
+    --bg:#070b14;
+    --panel:rgba(255,255,255,.055);
+    --stroke:rgba(255,255,255,.10);
+    --text:#eaf1ff;
+    --muted:#93a2c0;
+    --cyan:#38e8f0;
+    --violet:#8b7cff;
+    --ok:#5ff2a8;
+    --bad:#ff6b8b;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    overflow:hidden;
+    overscroll-behavior:none;
+  }
+  #app{position:fixed;inset:0}
+
+  /* 背景 */
+  .bg{position:absolute;inset:0;z-index:0;overflow:hidden}
+  .blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.34;animation:drift 22s ease-in-out infinite alternate}
+  .b1{width:52vmax;height:52vmax;left:-14vmax;top:-16vmax;background:radial-gradient(circle,#2b6dff,transparent 62%)}
+  .b2{width:46vmax;height:46vmax;right:-12vmax;top:6vmax;background:radial-gradient(circle,#8b3bff,transparent 62%);animation-delay:-7s}
+  .b3{width:44vmax;height:44vmax;left:22vmax;bottom:-20vmax;background:radial-gradient(circle,#00d0c0,transparent 62%);animation-delay:-13s}
+  @keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(4vmax,-3vmax,0) scale(1.18)}}
+  .grid{position:absolute;inset:0;opacity:.16;
+    background-image:linear-gradient(rgba(255,255,255,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.10) 1px,transparent 1px);
+    background-size:44px 44px;
+    mask-image:radial-gradient(ellipse at 50% 40%,#000 20%,transparent 78%);
+    -webkit-mask-image:radial-gradient(ellipse at 50% 40%,#000 20%,transparent 78%);
+  }
+
+  /* 画布 */
+  #cv{position:absolute;inset:0;z-index:1;width:100%;height:100%;display:block;touch-action:none}
+
+  /* 顶栏 */
+  .topbar{
+    position:absolute;z-index:3;left:0;right:0;top:0;
+    display:flex;align-items:center;gap:14px;
+    padding:12px 16px 0;
+    pointer-events:none;
+  }
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:.5px;font-size:15px}
+  .brand i{width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--violet));box-shadow:0 0 14px rgba(56,232,240,.8);display:inline-block}
+  /* 窄屏读数：品牌名隐藏，把轮次与得分挪到顶栏，避免和画布上的计时环打架 */
+  .mini{display:none;align-items:center;gap:10px;font-weight:800;font-size:13px}
+  .mini em{font-style:normal;color:var(--muted);font-weight:600;margin-right:4px}
+  .mini b{color:var(--text);font-size:15px}
+  .mini .s{color:var(--ok)}
+  body.narrow .brand span{display:none}
+  body.narrow .mini{display:flex}
+  .spacer{flex:1}
+  .topbtn{
+    pointer-events:auto;cursor:pointer;border:1px solid var(--stroke);background:var(--panel);
+    color:var(--text);font:inherit;font-size:13px;font-weight:600;
+    padding:7px 13px;border-radius:11px;backdrop-filter:blur(10px);transition:.18s;
+  }
+  .topbtn:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
+
+  /* 键盘 */
+  .keypad{
+    position:absolute;z-index:3;left:50%;transform:translateX(-50%);
+    bottom:calc(12px + env(safe-area-inset-bottom));
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px;width:min(320px,74vw);
+  }
+  .keypad button{
+    cursor:pointer;border:1px solid var(--stroke);background:var(--panel);color:var(--text);
+    font:600 19px/1 inherit;padding:13px 0;border-radius:14px;
+    backdrop-filter:blur(12px);transition:transform .1s,background .16s,border-color .16s;
+  }
+  .keypad button:active{transform:scale(.94)}
+  .keypad button:hover{background:rgba(255,255,255,.12)}
+  .keypad .fn{font-size:15px;color:var(--muted)}
+  .keypad .go{
+    background:linear-gradient(135deg,var(--cyan),var(--violet));border-color:transparent;color:#06101f;font-weight:800;
+  }
+  body.locked .keypad button{opacity:.34;pointer-events:none;filter:saturate(.4)}
+
+  /* 覆盖层 */
+  .overlay{
+    position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;
+    padding:24px;background:rgba(4,7,14,.62);backdrop-filter:blur(9px);
+  }
+  .overlay.on{display:flex;animation:fade .28s ease both}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .card{
+    width:min(520px,100%);max-height:calc(100% - 40px);overflow:auto;
+    background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.045));
+    border:1px solid var(--stroke);border-radius:22px;
+    padding:26px 24px;text-align:center;
+    box-shadow:0 30px 70px rgba(0,0,0,.55);
+    animation:pop .32s cubic-bezier(.2,1.3,.4,1) both;
+  }
+  @keyframes pop{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+  .card h1{margin:6px 0 4px;font-size:27px;letter-spacing:.5px}
+  .card h1 span{background:linear-gradient(120deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .card p{margin:8px 0;color:var(--muted);font-size:14.5px;line-height:1.75}
+  .rules{text-align:left;margin:16px 0;padding:14px 16px;border-radius:15px;background:rgba(255,255,255,.05);border:1px solid var(--stroke)}
+  .rules li{margin:7px 0;font-size:14px;line-height:1.6;color:#d3ddf1;list-style:none}
+  .rules li b{color:var(--cyan)}
+  .rules{margin-left:0;padding-left:16px}
+  .cta{
+    margin-top:16px;width:100%;cursor:pointer;border:0;border-radius:15px;
+    padding:14px 0;font:800 16px/1 inherit;color:#06101f;
+    background:linear-gradient(120deg,var(--cyan),var(--violet));
+    box-shadow:0 14px 30px rgba(90,120,255,.35);transition:transform .12s,filter .2s;
+  }
+  .cta:hover{filter:brightness(1.08)}
+  .cta:active{transform:scale(.97)}
+  .ghost{margin-top:9px;width:100%;cursor:pointer;border:1px solid var(--stroke);background:transparent;color:var(--muted);border-radius:14px;padding:11px 0;font:600 14px/1 inherit}
+  .ghost:hover{color:var(--text);border-color:rgba(255,255,255,.28)}
+  .big{font-size:44px;font-weight:800;margin:6px 0 2px;background:linear-gradient(120deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .statrow{display:flex;gap:10px;margin:18px 0 4px}
+  .stat{flex:1;background:rgba(255,255,255,.055);border:1px solid var(--stroke);border-radius:14px;padding:12px 8px}
+  .stat b{display:block;font-size:21px;letter-spacing:.5px}
+  .stat small{color:var(--muted);font-size:12.5px}
+  .hint{font-size:12.5px;color:#6f7f9d;margin-top:14px}
+  .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.6px;color:var(--cyan);border:1px solid rgba(56,232,240,.4);border-radius:999px;padding:4px 11px;background:rgba(56,232,240,.09)}
+  @media (max-height:560px){
+    .rules{display:none}
+    .card{padding:20px 18px}
+  }
+  @media (max-width:420px){
+    .keypad button{padding:11px 0;font-size:17px;border-radius:12px}
+    .card h1{font-size:23px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="bg">
+    <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+    <div class="grid"></div>
+  </div>
+
+  <canvas id="cv"></canvas>
+
+  <div class="topbar">
+    <div class="brand"><i></i><span>数一数</span></div>
+    <div class="mini">
+      <span><em>第</em><b id="mRound">1</b><em>轮</em></span>
+      <span><em>得分</em><b class="s" id="mScore">0</b></span>
+    </div>
+    <div class="spacer"></div>
+    <button class="topbtn" id="btnSound">🔊 音效</button>
+    <button class="topbtn" id="btnRestart">重新开始</button>
+  </div>
+
+  <div class="keypad" id="keypad">
+    <button data-d="1">1</button><button data-d="2">2</button><button data-d="3">3</button>
+    <button data-d="4">4</button><button data-d="5">5</button><button data-d="6">6</button>
+    <button data-d="7">7</button><button data-d="8">8</button><button data-d="9">9</button>
+    <button class="fn" data-a="clear">清空</button>
+    <button data-d="0">0</button>
+    <button class="fn" data-a="back">←</button>
+    <button class="go" data-a="submit" style="grid-column:span 3">提交答案 ⏎</button>
+  </div>
+
+  <div class="overlay on" id="ovWelcome">
+    <div class="card">
+      <span class="tag">限时 5 秒 / 每轮</span>
+      <h1>数一数 <span>Counting Rush</span></h1>
+      <p>在倒计时结束前，数清画面里的目标图形有多少个。</p>
+      <ul class="rules">
+        <li>⏱ 每轮限时 <b>5 秒</b>，数完点「提交答案」（或按回车）。</li>
+        <li>✅ 猜对进入下一轮，越快提交，<b>剩余时间奖励</b>越高。</li>
+        <li>🔥 每过 <b>3 轮</b>难度提升：目标变多、干扰图形变多，还会出现运动、闪烁与成堆重叠。</li>
+        <li>🎯 从第 4 轮起，答数<b>相差 1 个以内也算对</b>（精确命中才有满额加分）。</li>
+        <li>❌ 猜错或超时，游戏立即结束。</li>
+      </ul>
+      <button class="cta" id="btnStart">开始游戏</button>
+      <div class="hint">键盘：数字输入 · Backspace 删除 · Enter 提交</div>
+    </div>
+  </div>
+
+  <div class="overlay" id="ovOver">
+    <div class="card">
+      <span class="tag" id="overReason">游戏结束</span>
+      <h1 id="overTitle">这一局到此为止</h1>
+      <div class="big" id="overRound">1</div>
+      <p>抵达轮数</p>
+      <div class="statrow">
+        <div class="stat"><b id="overScore">0</b><small>本局得分</small></div>
+        <div class="stat"><b id="overBest">0</b><small>历史最高</small></div>
+        <div class="stat"><b id="overRight">0</b><small>累计答对</small></div>
+      </div>
+      <p id="overDetail">—</p>
+      <button class="cta" id="btnAgain">再来一局</button>
+      <button class="ghost" id="btnBackMenu">返回首页</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ============ 工具 ============ */
+  const clamp = (v,a,b)=> v<a?a:(v>b?b:v);
+  const lerp  = (a,b,t)=> a+(b-a)*t;
+  const easeOut = t => 1-Math.pow(1-t,3);
+  const TAU = Math.PI*2;
+  const rand = (a,b)=> a+Math.random()*(b-a);
+  const randi = (a,b)=> Math.floor(rand(a,b+1));
+  const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+  const shuffle = a=>{ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+
+  /* ============ 每轮限时（秒）：想改时长只改这里 ============ */
+  const ROUND_SEC = 5;
+
+  /* ============ 画布 ============ */
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  let DW=0, DH=0;
+
+  function layout(){
+    const dpr = Math.min(window.devicePixelRatio||1, 2);
+    DW = window.innerWidth; DH = window.innerHeight;
+    cv.width = Math.round(DW*dpr); cv.height = Math.round(DH*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+
+  /* ============ 音效（WebAudio 合成，无外部资源） ============ */
+  const Sfx = (function(){
+    let ac=null, on=true;
+    function ensure(){ if(!ac){ try{ ac = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } } if(ac.state==='suspended') ac.resume(); return ac; }
+    function tone(freq,dur,type,vol,delay){
+      if(!on) return; const a=ensure(); if(!a) return;
+      const t0=a.currentTime+(delay||0);
+      const osc=a.createOscillator(), g=a.createGain();
+      osc.type=type||'sine'; osc.frequency.setValueAtTime(freq,t0);
+      g.gain.setValueAtTime(0,t0);
+      g.gain.linearRampToValueAtTime(vol||.16,t0+.011);
+      g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+      osc.connect(g); g.connect(a.destination); osc.start(t0); osc.stop(t0+dur+.02);
+    }
+    function noise(dur,vol){
+      if(!on) return; const a=ensure(); if(!a) return;
+      const len=Math.floor(a.sampleRate*dur), buf=a.createBuffer(1,len,a.sampleRate), d=buf.getChannelData(0);
+      for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.2);
+      const s=a.createBufferSource(); s.buffer=buf;
+      const f=a.createBiquadFilter(); f.type='lowpass'; f.frequency.value=1400;
+      const g=a.createGain(); g.gain.value=vol||.22;
+      s.connect(f); f.connect(g); g.connect(a.destination); s.start();
+    }
+    return {
+      unlock(){ ensure(); },
+      toggle(){ on=!on; if(on) tone(880,.1,'triangle',.12); return on; },
+      get enabled(){ return on; },
+      tap(){ tone(520,.06,'square',.05); },
+      submit(){ tone(400,.09,'triangle',.10); tone(600,.11,'triangle',.09,.07); },
+      right(){ [523,659,784,1046].forEach((f,i)=>tone(f,.28,'sine',.14,i*.075)); },
+      wrong(){ tone(220,.28,'sawtooth',.12); tone(150,.42,'sawtooth',.10,.1); },
+      tick(){ tone(1500,.035,'square',.05); },
+      beep(){ tone(880,.14,'sine',.12); },
+      level(){ [392,523,659,880].forEach((f,i)=>tone(f,.34,'triangle',.13,i*.1)); },
+      over(){ [523,466,392,294].forEach((f,i)=>tone(f,.36,'sine',.13,i*.15)); }
+    };
+  })();
+
+  /* ============ 难度分级：每 3 轮提升一级 ============ */
+  const TIER = [null,
+    {name:'热身',        desc:'看清就好，慢慢数',     targets:[4,7],   distractors:[0,1],  behaviors:['static'],                    shapes:['circle'],  speed:[0,0],     clusterP:0,   jitter:0,  blinkChance:0,    palettes:[['#38e8f0','#4aa8ff','#8b7cff','#5ff2a8']] },
+    {name:'小试',        desc:'目标变多了，也更快',   targets:[8,12],  distractors:[2,4],  behaviors:['static'],                    shapes:['circle'],  speed:[0,0],     clusterP:0,   jitter:0,  blinkChance:0,    palettes:[['#38e8f0','#4aa8ff','#8b7cff','#5ff2a8','#ffd166']] },
+    {name:'动起来',      desc:'目标开始游走',         targets:[10,15], distractors:[4,7],  behaviors:['static','drift'],            shapes:['circle'],  speed:[10,22],   clusterP:.25, jitter:0,  blinkChance:0,    palettes:[['#38e8f0','#4aa8ff','#8b7cff','#5ff2a8','#ffd166','#ff8f6b'],['#a8ff60','#4ade80','#22d3ee','#facc15']] },
+    {name:'闪一下',      desc:'还会闪烁，别数错',     targets:[12,18], distractors:[6,10], behaviors:['static','drift','bounce'],   shapes:['circle'],  speed:[16,34],   clusterP:.35, jitter:.3, blinkChance:.45,palettes:[['#ff6b8b','#ffd166','#8b7cff','#38e8f0','#5ff2a8'],['#f472b6','#fb923c','#facc15','#4ade80','#60a5fa']] },
+    {name:'眼花了',      desc:'形状与颜色都在骗你',   targets:[15,22], distractors:[9,14], behaviors:['static','drift','bounce','sine'], shapes:['circle','square','diamond'], speed:[22,46], clusterP:.45, jitter:.6, blinkChance:.6, palettes:[['#38e8f0','#22d3ee','#60a5fa','#a78bfa','#f472b6','#fbbf24'],['#4ade80','#2dd4bf','#38bdf8','#c084fc','#fb7185']] },
+    {name:'极限',        desc:'稳住，一帧都别错过',   targets:[18,26], distractors:[12,18],behaviors:['static','drift','bounce','sine','orbit','jitter'], shapes:['circle','square','diamond'], speed:[30,62], clusterP:.55, jitter:1, blinkChance:.7, palettes:[['#ff2d78','#ff7a45','#ffd166','#7cf47a','#38e8f0','#8b7cff'],['#f43f5e','#f97316','#eab308','#22c55e','#06b6d4','#a855f7']] }
+  ];
+  const TIER_NAMES = ['热身','小试','动起来','闪一下','眼花了','极限'];
+
+  const SHAPE_LABEL = { circle:'圆形', square:'方块', diamond:'菱形' };
+
+  /* ============ 游戏状态 ============ */
+  const S = {
+    phase:'menu',            // menu | playing | reveal | over
+    round:1, tier:1,
+    score:0, right:0,
+    best: 0,
+    entities:[], blinkers:[], markers:[],
+    input:'', correct:0,
+    targetShape:'circle', targetWord:'',
+    timeLeft:ROUND_SEC, roundTime:ROUND_SEC,
+    judge:null, result:null,
+    tPhase:0, nextTimer:0,
+    W:0, H:0, box:null,
+    hud:{count:0, score:0, time:ROUND_SEC, round:1, tier:1, prompt:'', flash:0, flashColor:'#fff', reveal:0},
+    lastTick:ROUND_SEC
+  };
+  try{ const b = parseInt(localStorage.getItem('ds_counting_best')||'0',10); S.best = isNaN(b)?0:b; }catch(e){ S.best=0; }
+
+  /* ============ 尺寸与场地 ============ */
+  function measure(){
+    const W = window.innerWidth, H = window.innerHeight;
+    const keypad = document.getElementById('keypad');
+    const kbH = keypad ? keypad.offsetHeight : 0;
+    S.mobile = W < 560;
+    // 窄屏：品牌名收起，轮次与得分挪到顶栏，画布只负责提示语与计时环
+    document.body.classList.toggle('narrow', S.mobile);
+    S.W=W; S.H=H;
+
+    if(S.mobile){
+      // 竖排：顶栏 → 计时环（含已数数量）→ 提示语 → 场地 → 键盘，逐段留出间距
+      const rad = 24, ringTop = 134;
+      const ringY = ringTop + rad + 6;          // 环中心
+      const promptY = ringY + rad + 32;         // 提示语基线（避开“已数 N 个图形”）
+      const top = Math.max(promptY + 24, 196);  // 场地顶边，给提示语留出一行
+      const bottom = Math.min(kbH + 16, H*0.45);
+      S.ringY = ringY;
+      S.promptY = promptY;
+      S.box = { x: 16, y: top, w: Math.max(120, W-32), h: Math.max(120, H - top - bottom) };
+    } else {
+      const top = 98;
+      const bottom = Math.min(kbH + 20, H*0.46);
+      S.ringY = top/2 + 10;
+      S.promptY = 58;
+      S.box = { x: 22, y: top, w: Math.max(120, W-44), h: Math.max(140, H - top - bottom) };
+    }
+    syncMini();
+  }
+
+  // 顶栏的轮次/得分读数（窄屏可见）
+  function syncMini(){
+    const r=document.getElementById('mRound'), s=document.getElementById('mScore');
+    if(r) r.textContent = S.round;
+    if(s) s.textContent = S.score;
+  }
+
+  /* ============ 生成场景 ============ */
+  // 找一个与其他图形不重叠的位置；随机尝试不成就用螺旋搜索兜底，绝不叠成一团
+  function place(list, box, r){
+    const lo = Math.max(0, Math.min(box.w, box.h));
+    const minR = r + 3;
+    const maxR = lo/2;
+    const step = Math.max(3, r*0.9);
+
+    const passes = [
+      { n:150, f:0.98 },              // 先要求留一点缝
+      { n:120, f:0.94 }               // 放不下就允许紧贴（仍不重叠）
+    ];
+
+    for(const pass of passes){
+      for(let i=0;i<pass.n;i++){
+        const pad = r + 6;
+        const x = rand(box.x+pad, box.x+box.w-pad);
+        const y = rand(box.y+pad, box.y+box.h-pad);
+        let ok=true;
+        for(let j=0;j<list.length;j++){
+          const o=list[j], dx=o.x-x, dy=o.y-y, min=(o.r+r)*pass.f;
+          if(dx*dx+dy*dy < min*min){ ok=false; break; }
+        }
+        if(ok) return {x,y};
+      }
+    }
+
+    // 螺旋搜索：从随机圆心向外一圈圈找，保证在场内一定能找到位置
+    const c0 = {
+      x: rand(box.x + r, box.x + box.w - r),
+      y: rand(box.y + r, box.y + box.h - r)
+    };
+    const minDist = r + 3;
+    for(let ring=0; ring<Math.ceil(maxR/step)+2; ring++){
+      const radius = ring*step;
+      const steps = Math.max(8, Math.round(TAU*radius/step));
+      for(let s=0;s<steps;s++){
+        const ang = (s/steps)*TAU;
+        const x = clamp(c0.x + Math.cos(ang)*radius, box.x+r+2, box.x+box.w-r-2);
+        const y = clamp(c0.y + Math.sin(ang)*radius, box.y+r+2, box.y+box.h-r-2);
+        let ok=true;
+        for(let j=0;j<list.length;j++){
+          const o=list[j], dx=o.x-x, dy=o.y-y, m=Math.max(minDist, o.r+r-2);
+          if(dx*dx+dy*dy < m*m){ ok=false; break; }
+        }
+        if(ok) return {x,y};
+      }
+      if(radius > Math.max(box.w, box.h)) break;
+    }
+    // 极端情况（图形总周长几乎填满场地）：仍然给一个随机位置，但不与已有图形完全重合
+    for(let i=0;i<60;i++){
+      const x = rand(box.x+r+2, box.x+box.w-r-2);
+      const y = rand(box.y+r+2, box.y+box.h-r-2);
+      if(list.every(o=> Math.hypot(o.x-x,o.y-y) > Math.max(minDist, o.r+r-2)*0.75)) return {x,y};
+    }
+    return { x: c0.x, y: c0.y };
+  }
+
+  // 有意识地叠成一堆：以圆心为中心按环排布，紧密但不重叠、且不越界
+  function clusterPoint(center, idx, r, box){
+    if(idx<=0) return { x:center.x, y:center.y };
+    const pitch = r*2.02;
+    let ring=1, remain=idx;
+    while(remain > Math.max(1, Math.round(TAU*ring))){
+      remain -= Math.max(1, Math.round(TAU*ring));
+      ring++;
+      if(ring>4) break;
+    }
+    const n = Math.max(1, Math.round(TAU*ring));
+    const a = (remain/n)*TAU + ring*0.7;
+    const rad = pitch*ring;
+    return {
+      x: clamp(center.x + Math.cos(a)*rad, box.x+r+3, box.x+box.w-r-3),
+      y: clamp(center.y + Math.sin(a)*rad, box.y+r+3, box.y+box.h-r-3)
+    };
+  }
+
+  // 兜底松弛：把叠在一起的图形轻轻推开，保证生成瞬间画面干净可数
+  // 轨道图形的位置由圆心决定，所以推开的是圆心，而不是它的瞬时坐标
+  function relaxEntities(passes){
+    const box=S.box;
+    const es=S.entities;
+    const cxs=es.map(e=> e.onOrbit ? e.orbitCX : e.x);
+    const cys=es.map(e=> e.onOrbit ? e.orbitCY : e.y);
+    const wts=es.map(()=>1);
+
+    for(let k=0;k<passes;k++){
+      for(let i=0;i<es.length;i++){
+        for(let j=i+1;j<es.length;j++){
+          const a=es[i], b=es[j];
+          // 两条轨道互不相交，才不会在运行中把目标叠在一起
+          const need = (a.onOrbit || b.onOrbit)
+            ? (a.r + b.r) + a.orbitAmp + b.orbitAmp + 4
+            : (a.r + b.r) * 0.98;
+          let dx=cxs[j]-cxs[i], dy=cys[j]-cys[i];
+          let d=Math.hypot(dx,dy);
+          if(d>=need) continue;
+          if(d<0.001){ const ang=rand(0,TAU); dx=Math.cos(ang); dy=Math.sin(ang); d=1; }
+          const ux=dx/d, uy=dy/d;
+          const total=wts[i]+wts[j], move=(need-d)/total;
+          cxs[i]-=ux*move*wts[j]; cys[i]-=uy*move*wts[j];
+          cxs[j]+=ux*move*wts[i]; cys[j]+=uy*move*wts[i];
+        }
+      }
+      // 收回场地内（轨道图形按整条轨道收回）
+      for(let i=0;i<es.length;i++){
+        const e=es[i];
+        if(e.onOrbit){
+          const mx=e.r+e.orbitAmp+3, my=e.r+e.orbitAmp*0.72+3;
+          const lox=box.x+mx, hix=box.x+box.w-mx, loy=box.y+my, hiy=box.y+box.h-my;
+          cxs[i] = lox>hix ? box.x+box.w/2 : clamp(cxs[i], lox, hix);
+          cys[i] = loy>hiy ? box.y+box.h/2 : clamp(cys[i], loy, hiy);
+        } else {
+          cxs[i]=clamp(cxs[i], box.x+e.r+2, box.x+box.w-e.r-2);
+          cys[i]=clamp(cys[i], box.y+e.r+2, box.y+box.h-e.r-2);
+        }
+      }
+    }
+
+    for(let i=0;i<es.length;i++){
+      const e=es[i];
+      if(e.onOrbit){
+        e.orbitCX=cxs[i]; e.orbitCY=cys[i];
+        e.x = e.orbitCX + Math.cos(e.orbitA)*e.orbitAmp;
+        e.y = e.orbitCY + Math.sin(e.orbitA)*e.orbitAmp*0.72;
+      } else {
+        e.x=cxs[i]; e.y=cys[i];
+      }
+    }
+  }
+
+  // 场地能容纳的轨道半径：既不出界，又保证多条轨道互不相交
+  function orbitLimit(box, r, orbitCount){
+    const byField = Math.max(6, Math.min(box.w, box.h)/2 - r - 6);
+    const byCount = Math.max(8, (Math.min(box.w, box.h)/2 - r - 8) / Math.sqrt(Math.max(1, orbitCount)));
+    return { amp: clamp(Math.min(rand(16, 1.7*r+18), byCount), 6, byField), field: byField };
+  }
+
+  function buildEntity(kind, box, r, shape, speedRange, behavior, palette, cluster, maxOrbit){
+    // 轨道运动：先定圆心，保证整条轨道留在场地内，避免目标飞出画面
+    let orbitCenter=null, orbitAmp=0;
+    if(behavior==='orbit'){
+      const lim = orbitLimit(box, r, maxOrbit || 1);
+      orbitAmp = lim.amp;
+      const mx = r + orbitAmp + 5, my = r + orbitAmp*0.72 + 5;
+      const lox = box.x + mx, hix = box.x + box.w - mx;
+      const loy = box.y + my, hiy = box.y + box.h - my;
+      orbitCenter = {
+        x: hix > lox ? rand(lox, hix) : box.x + box.w/2,
+        y: hiy > loy ? rand(loy, hiy) : box.y + box.h/2
+      };
+      if(!isFinite(orbitCenter.x) || !isFinite(orbitCenter.y)) orbitCenter=null;
+    }
+
+    const p = place(S.entities, box, r);
+    let x=p.x, y=p.y;
+    if(!orbitCenter && cluster && cluster.center){
+      const cp = clusterPoint(cluster.center, cluster.idx, r, box);
+      x = cp.x; y = cp.y;
+    }
+    const sp = rand(speedRange[0], speedRange[1]);
+    const a0 = rand(0,TAU);
+    const e = {
+      kind, shape, r, x, y,
+      color: pick(palette),
+      alpha:1,
+      visible:true,
+      blinkT: rand(0,1.4),
+      blinkOn: rand(0,0.9),
+      behavior, vx: Math.cos(a0)*sp, vy: Math.sin(a0)*sp,
+      phase: rand(0,TAU), amp: rand(4,14), freq: rand(.6,1.7),
+      orbitCX: orbitCenter?orbitCenter.x:x, orbitCY: orbitCenter?orbitCenter.y:y,
+      orbitA: a0, orbitW: rand(.5,1.5)*(Math.random()<.5?-1:1), orbitAmp: orbitAmp,
+      onOrbit: !!orbitCenter,
+      rot: rand(0,TAU), rotV: rand(-1.6,1.6)
+    };
+    if(behavior==='static'){ e.vx=0; e.vy=0; }
+    return e;
+  }
+
+  function startRound(){
+    measure();
+    const box = S.box;
+    const prevTier = S.tier;
+    const level = clamp(Math.floor((S.round-1)/3)+1, 1, 6);
+    const T = TIER[level];
+    S.tier = level;
+    S.tierUp = (S.round>1 && level>prevTier) ? level : 0;   // 本帧是否需要播报难度提升
+    S.roundTime = ROUND_SEC; S.timeLeft = ROUND_SEC;
+    S.lastTick = ROUND_SEC;
+    S.roundStartAt = performance.now();
+
+    const shape = pick(T.shapes);
+    const palette = pick(T.palettes);
+    const count = randi(T.targets[0], T.targets[1]);
+    const dist  = randi(T.distractors[0], T.distractors[1]);
+    S.targetShape = shape;
+    S.targetWord = SHAPE_LABEL[shape];
+    S.correct = count;
+    S.input = '';
+    S.markers = [];
+    S.entities = [];
+    S.blinkers = [];
+
+    // 目标尺寸随数量衰减，保证能放下
+    const k = Math.sqrt(count+dist);
+    let r = clamp(lerp(27, 11.5, (k-3)/6.4), 10, 29);
+    if(S.W<520) r*=0.9;
+    if(S.W<400) r*=0.92;
+
+    // 有意识地让一部分目标叠成“一堆”，但保证不互相遮挡
+    const clusterCenter = Math.random()<T.clusterP
+      ? { x: rand(box.x+box.w*.38, box.x+box.w*.62), y: rand(box.y+box.h*.38, box.y+box.h*.62) }
+      : null;
+
+    // 目标
+    let clusterIdx=0;
+    let orbitUsed=0;
+    const supportsOrbit = T.behaviors.indexOf('orbit')>=0;
+    const orbitBudget = supportsOrbit ? clamp(Math.round(count*0.25), 2, 5) : 0;
+    const orbitCount = orbitBudget + 1;   // 供轨道半径估算，留一点余量
+    for(let i=0;i<count;i++){
+      let beh = pick(T.behaviors);
+      if(beh==='orbit' && orbitUsed>=orbitBudget) beh='drift';   // 轨道数量受控
+      if(beh==='orbit') orbitUsed++;
+      const cluster = (clusterCenter && beh!=='orbit' && Math.random()<0.85)
+        ? { center:clusterCenter, idx:clusterIdx++ }
+        : null;
+      S.entities.push(buildEntity('target', box, r, shape, T.speed, beh, palette, cluster, orbitCount));
+    }
+    // 干扰项：形状一定与目标不同（颜色可能相同，增加迷惑性）
+    const otherShapes = T.shapes.filter(s=>s!==shape);
+    const distShapes = otherShapes.length ? otherShapes : ['square'];
+    const distBehaviors = T.behaviors.filter(b=>b!=='orbit');
+    for(let i=0;i<dist;i++){
+      const beh = pick(distBehaviors.length?distBehaviors:['static']);
+      const e = buildEntity('distractor', box, r*rand(.82,1.18), pick(distShapes), T.speed, beh, palette, null);
+      // 闪烁只发生在干扰项上，因此任意时刻画面中都保留着全部目标
+      if(Math.random() < T.blinkChance){ S.blinkers.push(e); e.blinkT = 1; e.blinkOn = .62; }
+      S.entities.push(e);
+    }
+    relaxEntities(8);   // 生成瞬间就不允许互相遮挡
+    shuffle(S.entities);
+
+    S.phase='playing'; S.tPhase=0;
+    S.hud.round=S.round; S.hud.tier=level; S.hud.score=S.score;
+    S.hud.prompt = S.mobile
+      ? S.targetWord + '有几个？'
+      : '数出画面中的' + S.targetWord + '数量';
+    S.hud.flash=0; S.hud.reveal=0;
+    document.body.classList.remove('locked');
+    syncMini();
+    if(S.tierUp) Sfx.level(); else Sfx.beep();
+  }
+
+  /* ============ 更新 ============ */
+  function updateEntities(dt){
+    const box=S.box, T=TIER[S.tier];
+    const jit = T.jitter;
+    for(const e of S.entities){
+      const spd = Math.hypot(e.vx,e.vy);
+      switch(e.behavior){
+        case 'static':
+          if(jit>0){ e.x += Math.sin(performance.now()/1000*2.2+e.phase)*jit*0.35; e.y += Math.cos(performance.now()/1000*2.6+e.phase)*jit*0.35; }
+          break;
+        case 'drift':
+          e.x += e.vx*dt; e.y += e.vy*dt;
+          break;
+        case 'sine':
+          e.x += e.vx*0.45*dt; e.y += e.vy*0.45*dt;
+          { const t=performance.now()/1000; e.x += Math.cos(t*e.freq+e.phase)*e.amp*dt*2.0; e.y += Math.sin(t*e.freq*1.3+e.phase)*e.amp*dt*2.0; }
+          break;
+        case 'orbit':
+          e.orbitA += e.orbitW*dt;
+          if(e.onOrbit){
+            e.x = e.orbitCX + Math.cos(e.orbitA)*e.orbitAmp;
+            e.y = e.orbitCY + Math.sin(e.orbitA)*e.orbitAmp*0.72;
+          }
+          break;
+        case 'bounce':
+          e.x += e.vx*dt; e.y += e.vy*dt;
+          if(e.x < box.x+e.r){ e.x=box.x+e.r; e.vx=Math.abs(e.vx); }
+          if(e.x > box.x+box.w-e.r){ e.x=box.x+box.w-e.r; e.vx=-Math.abs(e.vx); }
+          if(e.y < box.y+e.r){ e.y=box.y+e.r; e.vy=Math.abs(e.vy); }
+          if(e.y > box.y+box.h-e.r){ e.y=box.y+box.h-e.r; e.vy=-Math.abs(e.vy); }
+          break;
+        case 'jitter':
+          e.x += e.vx*dt + Math.sin(performance.now()/1000*7+e.phase)*jit*1.5*dt*8;
+          e.y += e.vy*dt + Math.cos(performance.now()/1000*8.3+e.phase)*jit*1.5*dt*8;
+          break;
+      }
+      // 静态/漂移类也要回到场地内
+      if(e.behavior!=='bounce' && e.behavior!=='orbit'){
+        if(e.x<box.x+e.r){ e.x=box.x+e.r; e.vx=Math.abs(e.vx); }
+        if(e.x>box.x+box.w-e.r){ e.x=box.x+box.w-e.r; e.vx=-Math.abs(e.vx); }
+        if(e.y<box.y+e.r){ e.y=box.y+e.r; e.vy=Math.abs(e.vy); }
+        if(e.y>box.y+box.h-e.r){ e.y=box.y+box.h-e.r; e.vy=-Math.abs(e.vy); }
+      }
+      e.rot += e.rotV*dt;
+    }
+    // 闪烁（只作用于干扰项）
+    for(const e of S.blinkers){
+      e.blinkT += dt;
+      const period = 1.25;
+      if(e.blinkT>=period){
+        e.blinkT=0;
+        e.blinkOn = e.blinkOn>.5 ? 0.30 : 0.72;   // 可见时长占比 30%~72%，确保任意时刻目标都完整可见
+      }
+      const visFrac = e.blinkOn;
+      const t = e.blinkT/period;
+      e.visible = t < visFrac;
+      e.alpha = e.visible ? clamp(Math.min(t, visFrac-t)/0.06, 0, 1) : 0;
+    }
+  }
+
+  function update(dt){
+    S.hud.flash = Math.max(0, S.hud.flash - dt*1.4);
+    S.hud.reveal = Math.max(0, S.hud.reveal - dt*2.2);
+
+    if(S.phase==='playing'){
+      S.tPhase += dt;
+      updateEntities(dt);
+      S.timeLeft -= dt;
+      S.hud.count = S.entities.length;
+      S.hud.time = Math.max(0, S.timeLeft);
+      const sec = Math.ceil(Math.max(0,S.timeLeft));
+      if(sec<=3 && sec>0 && sec!==S.lastTick){ S.lastTick=sec; Sfx.tick(); }
+      if(S.timeLeft<=0) endGame('timeout');
+      return;
+    }
+
+    if(S.phase==='reveal'){
+      S.tPhase += dt;
+      updateEntities(dt*0.35);
+      if(S.judge && S.judge.ready && S.tPhase >= S.judge.doneAt && S.tPhase >= S.nextTimer){
+        if(S.result && S.result.ok){ S.round++; startRound(); }   // 答对：轮次 +1，难度每 3 轮提升一级
+        else endGame('wrong');
+      }
+    }
+  }
+
+  /* ============ 绘制 ============ */
+  function rr(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+  }
+
+  function drawShape(e, alpha, fill){
+    const a = alpha===undefined ? (e.alpha===undefined?1:e.alpha) : alpha;
+    if(a<=0.004) return;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.translate(e.x, e.y);
+
+    if(fill) { ctx.shadowColor = e.color; ctx.shadowBlur = 16; }
+
+    const g = ctx.createRadialGradient(-e.r*.35,-e.r*.42, e.r*.15, 0,0, e.r*1.25);
+    if(fill){
+      g.addColorStop(0,'#ffffff'); g.addColorStop(.32,e.color); g.addColorStop(1, e.color);
+    } else {
+      g.addColorStop(0, e.color+'00'); g.addColorStop(1, e.color);
+    }
+    ctx.fillStyle = g;
+    ctx.strokeStyle = e.color;
+    ctx.lineWidth = 2;
+
+    if(e.shape==='circle'){
+      ctx.beginPath(); ctx.arc(0,0,e.r,0,TAU); ctx.fill();
+      if(fill){ ctx.globalAlpha=a*.5; ctx.beginPath(); ctx.arc(-e.r*.32,-e.r*.36,e.r*.24,0,TAU); ctx.fillStyle='#fff'; ctx.fill(); }
+    } else if(e.shape==='square'){
+      const s=e.r*1.48, rad=e.r*0.32;
+      ctx.save(); ctx.rotate(fill?0:e.rot*.6); rr(-s/2,-s/2,s,s,rad); ctx.fill();
+      if(fill){ ctx.globalAlpha=a*.35; rr(-s/2,-s/2,s,s*.42,rad); ctx.fillStyle='#fff'; ctx.fill(); }
+      ctx.restore();
+    } else {
+      ctx.save(); ctx.rotate(fill?0:e.rot*.6);
+      ctx.beginPath();
+      ctx.moveTo(0,-e.r*1.22); ctx.lineTo(e.r*1.16,0); ctx.lineTo(0,e.r*1.22); ctx.lineTo(-e.r*1.16,0);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function drawHUD(){
+    const h=S.hud;
+    const NAME='system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.save();
+    ctx.textBaseline='middle';
+
+    // 窄屏的轮次与得分由顶栏 DOM 显示，画布只画提示语与计时环
+    if(!S.mobile){
+      ctx.textAlign='left';
+      ctx.font='700 13px '+NAME;
+      ctx.fillStyle='rgba(147,162,192,.95)';
+      ctx.fillText('第 '+h.round+' 轮', 22, 30);
+
+      // 难度标签
+      const tname = TIER_NAMES[clamp(h.tier,1,6)-1];
+      ctx.font='700 12px '+NAME;
+      const tw = ctx.measureText(tname).width;
+      const tx = DW-tw-46, ty = 20;
+      ctx.fillStyle='rgba(56,232,240,.12)';
+      rr(tx, ty, tw+22, 21, 10.5); ctx.fill();
+      ctx.strokeStyle='rgba(56,232,240,.42)'; ctx.lineWidth=1; ctx.stroke();
+      ctx.fillStyle='#38e8f0'; ctx.textAlign='center';
+      ctx.fillText(tname, tx+(tw+22)/2, ty+11);
+
+      // 得分
+      ctx.textAlign='right';
+      ctx.font='700 13px '+NAME;
+      ctx.fillStyle='rgba(147,162,192,.95)';
+      ctx.fillText('得分', DW-22, 30);
+      ctx.font='800 20px '+NAME;
+      ctx.fillStyle='#5ff2a8';
+      ctx.fillText(String(h.score), DW-22, 58);
+    }
+
+    // 计时环 + 已数数量
+    if(S.phase==='playing' || S.phase==='reveal'){
+      const cx=DW/2, rad = S.mobile ? 24 : 27;
+      const cy = S.ringY;
+      const frac=clamp(h.time/S.roundTime,0,1);
+      ctx.lineWidth=6; ctx.lineCap='round';
+      ctx.strokeStyle='rgba(255,255,255,.09)';
+      ctx.beginPath(); ctx.arc(cx,cy,rad,0,TAU); ctx.stroke();
+      const col = frac>.5?'#5ff2a8':(frac>.22?'#ffd166':'#ff6b8b');
+      ctx.strokeStyle=col; ctx.shadowColor=col; ctx.shadowBlur=12;
+      ctx.beginPath(); ctx.arc(cx,cy,rad,-Math.PI/2,-Math.PI/2+TAU*frac); ctx.stroke();
+      ctx.shadowBlur=0;
+      ctx.textAlign='center';
+      ctx.font='800 '+(S.mobile?19:21)+'px '+NAME;
+      ctx.fillStyle='#eaf1ff';
+      ctx.fillText(String(Math.ceil(Math.max(0,h.time))), cx, cy+1);
+      ctx.font='700 10.5px '+NAME;
+      ctx.fillStyle='rgba(147,162,192,.9)';
+      ctx.fillText('已数 '+h.count+' 个图形', cx, cy+rad+14);
+    }
+
+    // 题目提示语：窄屏居中排在计时环下方，宽屏放左上角
+    const prompt = h.prompt || '准备…';
+    ctx.textAlign = S.mobile ? 'center' : 'left';
+    ctx.font = '800 '+(S.mobile?19:22)+'px '+NAME;
+    ctx.fillStyle='#eaf1ff';
+    if(S.mobile) ctx.fillText(prompt, DW/2, S.promptY);
+    else ctx.fillText(prompt, 22, 58);
+    ctx.restore();
+  }
+
+  function drawAnswerBadge(){
+    if(S.phase!=='playing' && S.phase!=='reveal') return;
+    const NAME='system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+    const txt = S.input==='' ? '?' : S.input;
+    ctx.save();
+    ctx.font='800 19px '+NAME;
+    const tw = ctx.measureText(txt).width;
+    const w = Math.max(S.mobile?86:78, tw+34);
+    const bh = 40;
+    let x, y;
+    if(S.mobile){
+      // 键盘上方的空隙放不下时不硬塞，改为场地内左下角，保证不压住键盘
+      x = S.box.x + 10;
+      y = S.box.y + S.box.h - bh - 10;
+    } else {
+      x = Math.max(20, (DW - w)/2 - 220);
+      y = Math.min(S.box.y + S.box.h + 6, DH - bh - 8);
+    }
+
+    // 标签
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.font='700 11px '+NAME;
+    ctx.fillStyle='rgba(147,162,192,.9)';
+    ctx.fillText('你的答案', x, y-12);
+
+    ctx.fillStyle='rgba(255,255,255,.07)';
+    rr(x,y,w,bh,13); ctx.fill();
+    ctx.strokeStyle= S.phase==='reveal'
+      ? (S.judge && S.judge.ok ? 'rgba(95,242,168,.55)' : 'rgba(255,107,139,.55)')
+      : 'rgba(255,255,255,.14)';
+    ctx.lineWidth=1; ctx.stroke();
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font='800 19px '+NAME;
+    ctx.fillStyle= S.input==='' ? 'rgba(147,162,192,.7)' : '#eaf1ff';
+    ctx.fillText(txt, x+w/2, y+bh/2+1);
+    ctx.restore();
+  }
+
+  function drawMarkers(){
+    const list=S.markers.filter(m=>S.tPhase>=m.t && S.tPhase < m.t+1.15);
+    for(const m of list){
+      const p=clamp((S.tPhase-m.t)/0.45,0,1);
+      const a=p<1?easeOut(p):clamp(1-(S.tPhase-m.t-0.45)/0.7,0,1);
+      ctx.save();
+      ctx.globalAlpha=a;
+      ctx.strokeStyle='#5ff2a8'; ctx.lineWidth=2.5; ctx.shadowColor='#5ff2a8'; ctx.shadowBlur=14;
+      ctx.beginPath(); ctx.arc(m.x,m.y,m.r+6+p*4,0,TAU); ctx.stroke();
+      ctx.shadowBlur=0;
+      ctx.fillStyle='rgba(6,16,31,.85)';
+      ctx.beginPath(); ctx.arc(m.x,m.y,m.r+3,0,TAU); ctx.fill();
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.font='800 '+Math.max(11,Math.round(m.r*0.95))+'px system-ui,-apple-system,sans-serif';
+      ctx.fillStyle='#5ff2a8';
+      ctx.fillText(String(m.n), m.x, m.y+1);
+      ctx.restore();
+    }
+  }
+
+  function drawOverlays(){
+    // 判定横幅
+    if(S.phase==='reveal' && S.judge){
+      const j=S.judge;
+      ctx.save();
+      const y = S.box.y + S.box.h*0.5;
+      const txt = j.ok ? '答对了！' : '差一点…';
+      const range = j.lo===j.hi ? ('正确答案 '+j.answer) : ('正确答案 '+j.answer+'，'+j.lo+'~'+j.hi+' 都算对');
+      const sub = j.ok ? (range + '，+' + j.gain + ' 分') : (range + '，你答的是 '+j.given);
+      const w=Math.min(DW-40, 420);
+      ctx.globalAlpha = clamp(S.tPhase/0.16,0,1);
+      ctx.fillStyle='rgba(6,10,20,.82)';
+      rr(DW/2-w/2, y-56, w, 112, 20); ctx.fill();
+      ctx.strokeStyle = j.ok ? 'rgba(95,242,168,.55)' : 'rgba(255,107,139,.55)';
+      ctx.lineWidth=1.5; ctx.stroke();
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.font='800 26px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillStyle = j.ok ? '#5ff2a8' : '#ff6b8b';
+      ctx.fillText(txt, DW/2, y-16);
+      ctx.font='600 14px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillStyle='#c7d3ea';
+      ctx.fillText(sub, DW/2, y+20);
+      ctx.restore();
+    }
+
+    // 难度提升播报
+    if(S.phase==='reveal' && S.tierUp){
+      const a=clamp(1-(S.tPhase-0.9)/1.1,0,1);
+      if(a>0){
+        ctx.save();
+        ctx.globalAlpha=a;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.font='800 30px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+        ctx.fillStyle='#38e8f0'; ctx.shadowColor='#38e8f0'; ctx.shadowBlur=22;
+        ctx.fillText('难度提升 · '+TIER_NAMES[S.tierUp-1], DW/2, S.box.y+34);
+        ctx.font='600 14px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+        ctx.shadowBlur=0; ctx.fillStyle='#c7d3ea';
+        ctx.fillText(TIER[S.tierUp].desc, DW/2, S.box.y+62);
+        ctx.restore();
+      }
+    }
+  }
+
+  function render(){
+    ctx.clearRect(0,0,DW,DH);
+    if(S.phase==='menu' || S.phase==='over'){
+      drawHUD();
+      return;
+    }
+    // 场地
+    ctx.save();
+    ctx.strokeStyle='rgba(255,255,255,.07)';
+    ctx.lineWidth=1;
+    rr(S.box.x,S.box.y,S.box.w,S.box.h,22); ctx.stroke();
+    ctx.restore();
+
+    for(const e of S.entities) drawShape(e);
+    drawMarkers();
+    drawHUD();
+    drawAnswerBadge();
+    drawOverlays();
+  }
+
+  /* ============ 流程 ============ */
+  let rafId=0, last=0;
+  function loop(ts){
+    rafId=requestAnimationFrame(loop);
+    if(!last) last=ts;
+    let dt=(ts-last)/1000; last=ts;
+    if(dt>0.055) dt=0.055;
+    update(dt);
+    render();
+  }
+
+  function stopLoop(){ if(rafId) cancelAnimationFrame(rafId); rafId=0; last=0; }
+  function startLoop(){ stopLoop(); rafId=requestAnimationFrame(loop); }
+
+  function showOverlay(id){
+    ['ovWelcome','ovOver'].forEach(k=>{
+      const el=document.getElementById(k);
+      if(el) el.classList.toggle('on', k===id);
+    });
+    document.body.classList.toggle('locked', !!id);
+  }
+
+  // 限时很短，高难度档目标又多又在动：给 ±1 的宽容，否则纯靠运气
+  function answerTolerance(tier){ return tier>=4 ? 1 : 0; }
+
+  // 把可接受范围写成人话
+  function acceptText(lo, hi){
+    if(lo===hi) return '正确答案 '+lo;
+    return '正确答案 '+S.correct+'（'+lo+'~'+hi+' 都算对）';
+  }
+
+  function submitAnswer(){
+    if(S.phase!=='playing') return;
+    if(S.input==='') { Sfx.tap(); return; }
+    const given=parseInt(S.input,10);
+    const tol = answerTolerance(S.tier);
+    const lo = Math.max(0, S.correct-tol), hi = S.correct+tol;
+    const ok = given>=lo && given<=hi;
+    S.phase='reveal'; S.tPhase=0;
+    document.body.classList.add('locked');
+
+    // 依次点亮计数
+    const ents = S.entities.slice().sort((a,b)=> (a.y-b.y) || (a.x-b.x));
+    S.markers = ents.map((e,i)=> ({ n:i+1, x:e.x, y:e.y, r:e.r, t:0.08+i*0.055 }));
+    const total = 0.08 + ents.length*0.055 + 0.5;
+
+    let gain=0;
+    if(ok){
+      const base = 12 + 8*S.tier;
+      const timeBonus = Math.round(S.timeLeft*2.2);
+      const perfect = given===S.correct ? Math.round(base*0.5) : 0;   // 精确命中才给满额
+      gain = base + timeBonus + perfect;
+      S.score += gain; S.right++;
+      if(S.score>S.best){ S.best=S.score; try{ localStorage.setItem('ds_counting_best', String(S.best)); }catch(e){} }
+    }
+    S.judge = { ok, answer:S.correct, lo, hi, given, gain,
+      ready:true, doneAt: ok?Math.max(total, 0.9):Math.max(total,1.1) };
+    S.result = { ok };
+    S.nextTimer = ok ? Math.max(total,0.9)+0.55 : 1.5;
+    S.hud.score = S.score;
+    S.hud.time = Math.max(0,S.timeLeft);
+    syncMini();
+
+    if(ok) Sfx.right(); else Sfx.wrong();
+  }
+
+  function endGame(reason){
+    if(S.phase==='over') return;
+    S.phase='over'; S.tPhase=0;
+    S.reason = reason;
+    Sfx.over();
+    const tail = ' 难度等级：' + TIER_NAMES[S.tier-1] + '（'+TIER[S.tier].desc+'）';
+    const detail = reason==='timeout'
+      ? '时间到！' + acceptText(S.correct-answerTolerance(S.tier), S.correct+answerTolerance(S.tier)) + '。'
+      : acceptText(S.correct-answerTolerance(S.tier), S.correct+answerTolerance(S.tier))
+        + '，你答的是 ' + (S.judge ? S.judge.given : '—') + '。';
+    document.getElementById('overReason').textContent = reason==='timeout' ? '⏰ 超时结束' : '❌ 猜错了';
+    document.getElementById('overTitle').textContent  = reason==='timeout' ? '时间到，手速差一点点' : '很接近了，再来一次';
+    document.getElementById('overRound').textContent  = S.round;
+    document.getElementById('overScore').textContent  = S.score;
+    document.getElementById('overBest').textContent   = S.best;
+    document.getElementById('overRight').textContent  = S.right;
+    document.getElementById('overDetail').textContent = detail + tail;
+    showOverlay('ovOver');
+  }
+
+  function newGame(){
+    S.round=1; S.score=0; S.right=0; S.tier=1; S.markers=[]; S.judge=null; S.result=null; S.tierUp=0;
+    syncMini();
+    showOverlay(null);
+    startRound();
+    startLoop();
+  }
+
+  /* ============ 输入 ============ */
+  function pushDigit(d){
+    if(S.phase!=='playing') return;
+    if(S.input.length>=3) return;
+    S.input = (S.input==='0'? d : S.input+d);
+    Sfx.tap();
+  }
+  function backspace(){ if(S.phase!=='playing') return; S.input=S.input.slice(0,-1); Sfx.tap(); }
+  function clearInput(){ if(S.phase!=='playing') return; S.input=''; Sfx.tap(); }
+
+  document.getElementById('keypad').addEventListener('click', ev=>{
+    const b=ev.target.closest('button'); if(!b) return;
+    Sfx.unlock();
+    if(b.dataset.d!==undefined) pushDigit(b.dataset.d);
+    else if(b.dataset.a==='back') backspace();
+    else if(b.dataset.a==='clear') clearInput();
+    else if(b.dataset.a==='submit') submitAnswer();
+  });
+
+  window.addEventListener('keydown', ev=>{
+    if(ev.key==='Enter'){ Sfx.unlock(); submitAnswer(); ev.preventDefault(); return; }
+    if(ev.key==='Backspace'){ backspace(); ev.preventDefault(); return; }
+    if(ev.key==='Escape'){ clearInput(); return; }
+    if(/^[0-9]$/.test(ev.key)){ Sfx.unlock(); pushDigit(ev.key); ev.preventDefault(); }
+  });
+
+  document.getElementById('btnStart').addEventListener('click', ()=>{ Sfx.unlock(); newGame(); });
+  document.getElementById('btnAgain').addEventListener('click', ()=>{ Sfx.unlock(); newGame(); });
+  document.getElementById('btnBackMenu').addEventListener('click', ()=>{
+    stopLoop(); S.phase='menu';
+    document.getElementById('overRound').textContent=S.round;
+    showOverlay('ovWelcome');
+    measure(); render();
+  });
+  document.getElementById('btnRestart').addEventListener('click', ()=>{ Sfx.unlock(); newGame(); });
+  document.getElementById('btnSound').addEventListener('click', ev=>{
+    const on = Sfx.toggle();
+    ev.currentTarget.textContent = on ? '🔊 音效' : '🔇 静音';
+  });
+
+  window.addEventListener('resize', ()=>{
+    layout(); measure();
+    if(S.phase==='menu'||S.phase==='over') render();
+  });
+  window.addEventListener('orientationchange', ()=>{ setTimeout(()=>{ layout(); measure(); }, 220); });
+
+  /* ============ 对外只读调试接口（方便自动化测试与二次开发） ============ */
+  try{
+    window.CountingGame = {
+      get state(){ return { phase:S.phase, round:S.round, tier:S.tier, score:S.score, right:S.right,
+        best:S.best, correct:S.correct, total:S.entities.length, targetShape:S.targetShape,
+        timeLeft:S.timeLeft, input:S.input, box:S.box, reason:S.reason, roundStartAt:S.roundStartAt,
+        judge:S.judge && { ok:S.judge.ok, answer:S.judge.answer, lo:S.judge.lo, hi:S.judge.hi,
+          exact:S.judge.lo===S.judge.hi, given:S.judge.given, gain:S.judge.gain } }; },
+      get entities(){ return S.entities; },
+      get blinkers(){ return S.blinkers; },
+      outOfBounds(){ const b=S.box; return S.entities.filter(e=> e.x<b.x-1||e.x>b.x+b.w+1||e.y<b.y-1||e.y>b.y+b.h+1).length; },
+      key(d){ pushDigit(String(d)); },
+      backspace, clear:clearInput, submit:submitAnswer,
+      start(){ Sfx.unlock(); newGame(); },
+      setTime(t){ S.timeLeft = t; },
+      setInput(v){ if(S.phase==='playing') S.input = String(v); },
+      answer(v){ if(S.phase!=='playing') return false; S.input = String(v); submitAnswer(); return true; },
+      eval(fn){ return fn({ S, TIER, TIER_NAMES, SHAPE_LABEL, startRound, place }); }
+    };
+  }catch(e){}
+
+  /* ============ 启动 ============ */
+  layout(); measure();
+  S.hud.prompt='准备开始';
+  render();
+  showOverlay('ovWelcome');
+})();
+</script>
+</body>
+</html>

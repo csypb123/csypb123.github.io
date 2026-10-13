@@ -670,3 +670,36 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
   .reveal, .reveal .char, [data-split] .char { opacity: 1 !important; transform: none !important; filter: none !important; }
   .preloader { display: none; }
 }
+
+/* ---------- 小游戏入口卡片（近况区） ---------- */
+.project {
+  display: flex; gap: 16px; padding: 22px 22px;
+  transition: transform .6s var(--ease), border-color .5s, background .5s, box-shadow .6s var(--ease);
+}
+.project:hover {
+  transform: translateX(6px); border-color: var(--stroke-2);
+  background: var(--surface-2); box-shadow: var(--glow);
+}
+.project__icon {
+  flex: none; width: 44px; height: 44px; border-radius: 13px;
+  display: grid; place-items: center;
+  font-size: 1.25rem; font-weight: 800; color: #05070e;
+  background: var(--grad); box-shadow: 0 14px 30px -14px rgba(110,150,255,.95);
+  transition: transform .6s var(--ease);
+}
+.project:hover .project__icon { transform: rotate(-90deg) scale(1.06); }
+.project__eyebrow {
+  font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: var(--text-3);
+}
+.project h4 {
+  margin-top: 6px; font-size: 1rem;
+  background: var(--grad); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.project__body > p { margin-top: 8px; font-size: .87rem; color: var(--text-2); }
+.project__cta {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 12px; font-size: .85rem; font-weight: 600; color: var(--cyan);
+}
+.project__cta i { font-style: normal; transition: transform .5s var(--ease); }
+.project:hover .project__cta i { transform: translate(3px, -3px); }
