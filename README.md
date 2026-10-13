@@ -39,6 +39,13 @@ node preview-server.cjs
 推送到 `main` 分支即自动发布，工作流见 `.github/workflows/deploy.yml`
 （GitHub Actions → `actions/deploy-pages`），通常 1–3 分钟生效。
 
+> **注意**：工作流只把 `index.html`、`styles.css`、`script.js`、`counting-game.html`、
+> `.nojekyll`、`assets/`、`README.md` 拷进发布产物。**新增页面时必须同步修改
+> `.github/workflows/deploy.yml` 里的 `cp` 那一行**，否则线上会 404。
+
+> 若用 GitHub token 通过 API 修改 `.github/workflows/**`，token 必须带 `workflow` 权限
+> （`gh auth refresh -s workflow`），否则 GitHub 会返回 404。
+
 若工作流的发布步骤报错，把仓库 **Settings → Pages → Source** 改成
 **Deploy from a branch**（分支 `main`、目录 `/ (root)`）也能直接发布根目录内容。
 
