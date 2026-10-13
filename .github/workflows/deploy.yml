@@ -26,8 +26,9 @@ jobs:
       - name: Assemble static site
         run: |
           mkdir _site
-          cp index.html styles.css script.js .nojekyll _site/
+          cp index.html styles.css script.js counting-game.html .nojekyll _site/
           cp -r assets _site/assets
+          cp README.md _site/README.md
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
