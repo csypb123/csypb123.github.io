@@ -6,15 +6,15 @@
 <title>数一数 · 限时计数小游戏</title>
 <style>
   :root{
-    --bg:#070b14;
-    --panel:rgba(255,255,255,.055);
-    --stroke:rgba(255,255,255,.10);
-    --text:#eaf1ff;
-    --muted:#93a2c0;
-    --cyan:#38e8f0;
-    --violet:#8b7cff;
-    --ok:#5ff2a8;
-    --bad:#ff6b8b;
+    --bg:#120a04;
+    --panel:rgba(255,233,205,.07);
+    --stroke:rgba(255,214,170,.18);
+    --text:#fdf1e2;
+    --muted:#c9a883;
+    --cyan:#ffb455;
+    --violet:#ff7a3d;
+    --ok:#9fe870;
+    --bad:#ff6b5c;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
@@ -53,7 +53,7 @@
     pointer-events:none;
   }
   .brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:.5px;font-size:15px}
-  .brand i{width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--violet));box-shadow:0 0 14px rgba(56,232,240,.8);display:inline-block}
+  .brand i{width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--violet));box-shadow:0 0 14px rgba(255,180,85,.8);display:inline-block}
   /* 窄屏读数：品牌名隐藏，把轮次与得分挪到顶栏，避免和画布上的计时环打架 */
   .mini{display:none;align-items:center;gap:10px;font-weight:800;font-size:13px}
   .mini em{font-style:normal;color:var(--muted);font-weight:600;margin-right:4px}
@@ -85,7 +85,7 @@
   .keypad button:hover{background:rgba(255,255,255,.12)}
   .keypad .fn{font-size:15px;color:var(--muted)}
   .keypad .go{
-    background:linear-gradient(135deg,var(--cyan),var(--violet));border-color:transparent;color:#06101f;font-weight:800;
+    background:linear-gradient(135deg,var(--cyan),var(--violet));border-color:transparent;color:#2a1206;font-weight:800;
   }
   body.locked .keypad button{opacity:.34;pointer-events:none;filter:saturate(.4)}
 
@@ -114,9 +114,9 @@
   .rules{margin-left:0;padding-left:16px}
   .cta{
     margin-top:16px;width:100%;cursor:pointer;border:0;border-radius:15px;
-    padding:14px 0;font:800 16px/1 inherit;color:#06101f;
+    padding:14px 0;font:800 16px/1 inherit;color:#2a1206;
     background:linear-gradient(120deg,var(--cyan),var(--violet));
-    box-shadow:0 14px 30px rgba(90,120,255,.35);transition:transform .12s,filter .2s;
+    box-shadow:0 14px 30px rgba(255,140,60,.38);transition:transform .12s,filter .2s;
   }
   .cta:hover{filter:brightness(1.08)}
   .cta:active{transform:scale(.97)}
@@ -127,8 +127,8 @@
   .stat{flex:1;background:rgba(255,255,255,.055);border:1px solid var(--stroke);border-radius:14px;padding:12px 8px}
   .stat b{display:block;font-size:21px;letter-spacing:.5px}
   .stat small{color:var(--muted);font-size:12.5px}
-  .hint{font-size:12.5px;color:#6f7f9d;margin-top:14px}
-  .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.6px;color:var(--cyan);border:1px solid rgba(56,232,240,.4);border-radius:999px;padding:4px 11px;background:rgba(56,232,240,.09)}
+  .hint{font-size:12.5px;color:#a8876a;margin-top:14px}
+  .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.6px;color:var(--cyan);border:1px solid rgba(255,180,85,.45);border-radius:999px;padding:4px 11px;background:rgba(255,180,85,.10)}
   @media (max-height:560px){
     .rules{display:none}
     .card{padding:20px 18px}
@@ -273,12 +273,12 @@
 
   /* ============ 难度分级：每 3 轮提升一级 ============ */
   const TIER = [null,
-    {name:'热身',        desc:'看清就好，慢慢数',     targets:[4,7],   distractors:[0,1],  behaviors:['static'],                    shapes:['circle'],  speed:[0,0],     clusterP:0,   jitter:0,  blinkChance:0,    palettes:[['#38e8f0','#4aa8ff','#8b7cff','#5ff2a8']] },
-    {name:'小试',        desc:'目标变多了，也更快',   targets:[8,12],  distractors:[2,4],  behaviors:['static'],                    shapes:['circle'],  speed:[0,0],     clusterP:0,   jitter:0,  blinkChance:0,    palettes:[['#38e8f0','#4aa8ff','#8b7cff','#5ff2a8','#ffd166']] },
-    {name:'动起来',      desc:'目标开始游走',         targets:[10,15], distractors:[4,7],  behaviors:['static','drift'],            shapes:['circle'],  speed:[10,22],   clusterP:.25, jitter:0,  blinkChance:0,    palettes:[['#38e8f0','#4aa8ff','#8b7cff','#5ff2a8','#ffd166','#ff8f6b'],['#a8ff60','#4ade80','#22d3ee','#facc15']] },
-    {name:'闪一下',      desc:'还会闪烁，别数错',     targets:[12,18], distractors:[6,10], behaviors:['static','drift','bounce'],   shapes:['circle'],  speed:[16,34],   clusterP:.35, jitter:.3, blinkChance:.45,palettes:[['#ff6b8b','#ffd166','#8b7cff','#38e8f0','#5ff2a8'],['#f472b6','#fb923c','#facc15','#4ade80','#60a5fa']] },
-    {name:'眼花了',      desc:'形状与颜色都在骗你',   targets:[15,22], distractors:[9,14], behaviors:['static','drift','bounce','sine'], shapes:['circle','square','diamond'], speed:[22,46], clusterP:.45, jitter:.6, blinkChance:.6, palettes:[['#38e8f0','#22d3ee','#60a5fa','#a78bfa','#f472b6','#fbbf24'],['#4ade80','#2dd4bf','#38bdf8','#c084fc','#fb7185']] },
-    {name:'极限',        desc:'稳住，一帧都别错过',   targets:[18,26], distractors:[12,18],behaviors:['static','drift','bounce','sine','orbit','jitter'], shapes:['circle','square','diamond'], speed:[30,62], clusterP:.55, jitter:1, blinkChance:.7, palettes:[['#ff2d78','#ff7a45','#ffd166','#7cf47a','#38e8f0','#8b7cff'],['#f43f5e','#f97316','#eab308','#22c55e','#06b6d4','#a855f7']] }
+    {name:'热身',        desc:'看清就好，慢慢数',     targets:[4,7],   distractors:[0,1],  behaviors:['static'],                    shapes:['circle'],  speed:[0,0],     clusterP:0,   jitter:0,  blinkChance:0,    palettes:[['#ffb455','#ff9d4d','#ff7a3d','#9fe870']] },
+    {name:'小试',        desc:'目标变多了，也更快',   targets:[8,12],  distractors:[2,4],  behaviors:['static'],                    shapes:['circle'],  speed:[0,0],     clusterP:0,   jitter:0,  blinkChance:0,    palettes:[['#ffb455','#ff9d4d','#ff7a3d','#9fe870','#ffd166']] },
+    {name:'动起来',      desc:'目标开始游走',         targets:[10,15], distractors:[4,7],  behaviors:['static','drift'],            shapes:['circle'],  speed:[10,22],   clusterP:.25, jitter:0,  blinkChance:0,    palettes:[['#ffb455','#ff9d4d','#ff7a3d','#9fe870','#ffd166','#ff8f6b'],['#a8ff60','#9fe870','#ffb455','#facc15']] },
+    {name:'闪一下',      desc:'还会闪烁，别数错',     targets:[12,18], distractors:[6,10], behaviors:['static','drift','bounce'],   shapes:['circle'],  speed:[16,34],   clusterP:.35, jitter:.3, blinkChance:.45,palettes:[['#ff6b5c','#ffd166','#ff7a3d','#ffb455','#9fe870'],['#f472b6','#fb923c','#facc15','#9fe870','#ff9d4d']] },
+    {name:'眼花了',      desc:'形状与颜色都在骗你',   targets:[15,22], distractors:[9,14], behaviors:['static','drift','bounce','sine'], shapes:['circle','square','diamond'], speed:[22,46], clusterP:.45, jitter:.6, blinkChance:.6, palettes:[['#ffb455','#ffb455','#ff9d4d','#ffb455','#f472b6','#fbbf24'],['#9fe870','#2dd4bf','#ffc06b','#ff9d8a','#ff6b5c']] },
+    {name:'极限',        desc:'稳住，一帧都别错过',   targets:[18,26], distractors:[12,18],behaviors:['static','drift','bounce','sine','orbit','jitter'], shapes:['circle','square','diamond'], speed:[30,62], clusterP:.55, jitter:1, blinkChance:.7, palettes:[['#ff2d78','#ff7a45','#ffd166','#9fe870','#ffb455','#ff7a3d'],['#f43f5e','#f97316','#eab308','#8ce99a','#ffb455','#ff7a3d']] }
   ];
   const TIER_NAMES = ['热身','小试','动起来','闪一下','眼花了','极限'];
 
@@ -736,7 +736,7 @@
     if(!S.mobile){
       ctx.textAlign='left';
       ctx.font='700 13px '+NAME;
-      ctx.fillStyle='rgba(147,162,192,.95)';
+      ctx.fillStyle='rgba(201,168,131,.95)';
       ctx.fillText('第 '+h.round+' 轮', 22, 30);
 
       // 难度标签
@@ -744,19 +744,19 @@
       ctx.font='700 12px '+NAME;
       const tw = ctx.measureText(tname).width;
       const tx = DW-tw-46, ty = 20;
-      ctx.fillStyle='rgba(56,232,240,.12)';
+      ctx.fillStyle='rgba(255,180,85,.14)';
       rr(tx, ty, tw+22, 21, 10.5); ctx.fill();
-      ctx.strokeStyle='rgba(56,232,240,.42)'; ctx.lineWidth=1; ctx.stroke();
-      ctx.fillStyle='#38e8f0'; ctx.textAlign='center';
+      ctx.strokeStyle='rgba(255,180,85,.48)'; ctx.lineWidth=1; ctx.stroke();
+      ctx.fillStyle='#ffb455'; ctx.textAlign='center';
       ctx.fillText(tname, tx+(tw+22)/2, ty+11);
 
       // 得分
       ctx.textAlign='right';
       ctx.font='700 13px '+NAME;
-      ctx.fillStyle='rgba(147,162,192,.95)';
+      ctx.fillStyle='rgba(201,168,131,.95)';
       ctx.fillText('得分', DW-22, 30);
       ctx.font='800 20px '+NAME;
-      ctx.fillStyle='#5ff2a8';
+      ctx.fillStyle='#9fe870';
       ctx.fillText(String(h.score), DW-22, 58);
     }
 
@@ -768,16 +768,16 @@
       ctx.lineWidth=6; ctx.lineCap='round';
       ctx.strokeStyle='rgba(255,255,255,.09)';
       ctx.beginPath(); ctx.arc(cx,cy,rad,0,TAU); ctx.stroke();
-      const col = frac>.5?'#5ff2a8':(frac>.22?'#ffd166':'#ff6b8b');
+      const col = frac>.5?'#9fe870':(frac>.22?'#ffd166':'#ff6b5c');
       ctx.strokeStyle=col; ctx.shadowColor=col; ctx.shadowBlur=12;
       ctx.beginPath(); ctx.arc(cx,cy,rad,-Math.PI/2,-Math.PI/2+TAU*frac); ctx.stroke();
       ctx.shadowBlur=0;
       ctx.textAlign='center';
       ctx.font='800 '+(S.mobile?19:21)+'px '+NAME;
-      ctx.fillStyle='#eaf1ff';
+      ctx.fillStyle='#fdf1e2';
       ctx.fillText(String(Math.ceil(Math.max(0,h.time))), cx, cy+1);
       ctx.font='700 10.5px '+NAME;
-      ctx.fillStyle='rgba(147,162,192,.9)';
+      ctx.fillStyle='rgba(201,168,131,.92)';
       ctx.fillText('已数 '+h.count+' 个图形', cx, cy+rad+14);
     }
 
@@ -785,7 +785,7 @@
     const prompt = h.prompt || '准备…';
     ctx.textAlign = S.mobile ? 'center' : 'left';
     ctx.font = '800 '+(S.mobile?19:22)+'px '+NAME;
-    ctx.fillStyle='#eaf1ff';
+    ctx.fillStyle='#fdf1e2';
     if(S.mobile) ctx.fillText(prompt, DW/2, S.promptY);
     else ctx.fillText(prompt, 22, 58);
     ctx.restore();
@@ -813,18 +813,18 @@
     // 标签
     ctx.textAlign='left'; ctx.textBaseline='middle';
     ctx.font='700 11px '+NAME;
-    ctx.fillStyle='rgba(147,162,192,.9)';
+    ctx.fillStyle='rgba(201,168,131,.92)';
     ctx.fillText('你的答案', x, y-12);
 
     ctx.fillStyle='rgba(255,255,255,.07)';
     rr(x,y,w,bh,13); ctx.fill();
     ctx.strokeStyle= S.phase==='reveal'
-      ? (S.judge && S.judge.ok ? 'rgba(95,242,168,.55)' : 'rgba(255,107,139,.55)')
+      ? (S.judge && S.judge.ok ? 'rgba(159,232,112,.6)' : 'rgba(255,107,92,.6)')
       : 'rgba(255,255,255,.14)';
     ctx.lineWidth=1; ctx.stroke();
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.font='800 19px '+NAME;
-    ctx.fillStyle= S.input==='' ? 'rgba(147,162,192,.7)' : '#eaf1ff';
+    ctx.fillStyle= S.input==='' ? 'rgba(201,168,131,.75)' : '#fdf1e2';
     ctx.fillText(txt, x+w/2, y+bh/2+1);
     ctx.restore();
   }
@@ -836,14 +836,14 @@
       const a=p<1?easeOut(p):clamp(1-(S.tPhase-m.t-0.45)/0.7,0,1);
       ctx.save();
       ctx.globalAlpha=a;
-      ctx.strokeStyle='#5ff2a8'; ctx.lineWidth=2.5; ctx.shadowColor='#5ff2a8'; ctx.shadowBlur=14;
+      ctx.strokeStyle='#9fe870'; ctx.lineWidth=2.5; ctx.shadowColor='#9fe870'; ctx.shadowBlur=14;
       ctx.beginPath(); ctx.arc(m.x,m.y,m.r+6+p*4,0,TAU); ctx.stroke();
       ctx.shadowBlur=0;
-      ctx.fillStyle='rgba(6,16,31,.85)';
+      ctx.fillStyle='rgba(24,13,6,.88)';
       ctx.beginPath(); ctx.arc(m.x,m.y,m.r+3,0,TAU); ctx.fill();
       ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.font='800 '+Math.max(11,Math.round(m.r*0.95))+'px system-ui,-apple-system,sans-serif';
-      ctx.fillStyle='#5ff2a8';
+      ctx.fillStyle='#9fe870';
       ctx.fillText(String(m.n), m.x, m.y+1);
       ctx.restore();
     }
@@ -860,16 +860,16 @@
       const sub = j.ok ? (range + '，+' + j.gain + ' 分') : (range + '，你答的是 '+j.given);
       const w=Math.min(DW-40, 420);
       ctx.globalAlpha = clamp(S.tPhase/0.16,0,1);
-      ctx.fillStyle='rgba(6,10,20,.82)';
+      ctx.fillStyle='rgba(20,11,5,.86)';
       rr(DW/2-w/2, y-56, w, 112, 20); ctx.fill();
-      ctx.strokeStyle = j.ok ? 'rgba(95,242,168,.55)' : 'rgba(255,107,139,.55)';
+      ctx.strokeStyle = j.ok ? 'rgba(159,232,112,.6)' : 'rgba(255,107,92,.6)';
       ctx.lineWidth=1.5; ctx.stroke();
       ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.font='800 26px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
-      ctx.fillStyle = j.ok ? '#5ff2a8' : '#ff6b8b';
+      ctx.fillStyle = j.ok ? '#9fe870' : '#ff6b5c';
       ctx.fillText(txt, DW/2, y-16);
       ctx.font='600 14px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
-      ctx.fillStyle='#c7d3ea';
+      ctx.fillStyle='#e8d3b8';
       ctx.fillText(sub, DW/2, y+20);
       ctx.restore();
     }
@@ -882,10 +882,10 @@
         ctx.globalAlpha=a;
         ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.font='800 30px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
-        ctx.fillStyle='#38e8f0'; ctx.shadowColor='#38e8f0'; ctx.shadowBlur=22;
+        ctx.fillStyle='#ffb455'; ctx.shadowColor='#ffb455'; ctx.shadowBlur=22;
         ctx.fillText('难度提升 · '+TIER_NAMES[S.tierUp-1], DW/2, S.box.y+34);
         ctx.font='600 14px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
-        ctx.shadowBlur=0; ctx.fillStyle='#c7d3ea';
+        ctx.shadowBlur=0; ctx.fillStyle='#e8d3b8';
         ctx.fillText(TIER[S.tierUp].desc, DW/2, S.box.y+62);
         ctx.restore();
       }
@@ -1069,6 +1069,8 @@
       setTime(t){ S.timeLeft = t; },
       setInput(v){ if(S.phase==='playing') S.input = String(v); },
       answer(v){ if(S.phase!=='playing') return false; S.input = String(v); submitAnswer(); return true; },
+      pauseLoop(){ const was = !!rafId; stopLoop(); return was; },
+      resumeLoop(){ if(!rafId) startLoop(); },
       eval(fn){ return fn({ S, TIER, TIER_NAMES, SHAPE_LABEL, startRound, place }); }
     };
   }catch(e){}
