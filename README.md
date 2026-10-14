@@ -1,21 +1,33 @@
 # 杨鹏博 · 个人主页
 
-纯静态、零依赖的个人主页：深色 + 青紫渐变、玻璃拟态，以及一整套丝滑的滚动动画。
+纯静态、零依赖的个人主页：**暖色调**（琥珀 → 橙红）、原创插画做整页背景、玻璃拟态，
+以及一整套丝滑的滚动动画，附带一个可在线试玩的计数小游戏。
 
 **在线地址：<https://csypb123.github.io/>**
+**评分卡：<https://csypb123.github.io/scorecard.html>**（创新性 45 / 美观性 30 / 完整性 20 / 部署与可用性 5）
 
 ## 文件结构
 
 | 文件 | 说明 |
 | --- | --- |
-| `index.html` | 页面结构：首页 / 关于我 / 兴趣 / 近况 / 联系 |
-| `styles.css` | 全部样式，配色集中在顶部 `:root` |
-| `script.js` | 滚动动画与交互（原生 JS，无第三方库） |
+| `index.html` | 页面结构：首页 / 关于我 / 项目 / 技能 / 兴趣 / 近况 / 关于本站 / 联系 |
+| `styles.css` | 全部样式，配色集中在顶部 `:root`（改主题基本只动这里） |
+| `script.js` | 入口门、背景音乐、滚动动画与交互（原生 JS，无第三方库） |
+| `scorecard.html` | 评分卡：逐项打分依据、与参考站对比、待改进项 |
 | `counting-game.html` | 「数一数」限时计数小游戏（Canvas 手写，单文件零依赖） |
+| `assets/bg-fish.jpg` | 整页背景插画（压缩至 1280px 宽，约 230 KB） |
+| `assets/fishinthepool.mp3` | 背景音乐 |
 | `assets/favicon.svg` | 站点图标 |
 | `assets/landscape.svg` | 首页个人卡片里的「风景窗」插画 |
 | `.nojekyll` | 让 GitHub Pages 跳过 Jekyll 处理 |
 | `preview-server.cjs` | 本地预览用的零依赖静态服务器 |
+
+## 功能
+
+- **入口门**：首次访问先看到一个「进入主页」页，并说明会播放背景音乐；也可以选择不播音乐直接浏览，选择会记在 localStorage 里。
+- **背景音乐**：右上角 BGM 按钮随时开关；「近况」版块里有一张播放卡，带播放/暂停、静音、重新开始、音量滑块，以及一块 **Canvas 实时频谱**（用 `AnalyserNode` 取频谱画柱状波形；没有音频上下文时自动退化成呼吸波形）。
+- **滚动动画**：逐字上浮、打字机、滚动显现、背景视差、时间线进度、技能条填充、卡片 3D 倾斜。
+- **性能取舍**：动画只用 `transform` 与 `opacity`；不用 `background-attachment: fixed`（改为固定定位图层），避免移动端掉帧。
 
 ## 小游戏：数一数
 
@@ -39,8 +51,8 @@ node preview-server.cjs
 推送到 `main` 分支即自动发布，工作流见 `.github/workflows/deploy.yml`
 （GitHub Actions → `actions/deploy-pages`），通常 1–3 分钟生效。
 
-> **注意**：工作流只把 `index.html`、`styles.css`、`script.js`、`counting-game.html`、
-> `.nojekyll`、`assets/`、`README.md` 拷进发布产物。**新增页面时必须同步修改
+> **注意**：工作流只把 `index.html`、`scorecard.html`、`counting-game.html`、`styles.css`、
+> `script.js`、`.nojekyll`、`assets/`、`README.md` 拷进发布产物。**新增页面时必须同步修改
 > `.github/workflows/deploy.yml` 里的 `cp` 那一行**，否则线上会 404。
 
 > 若用 GitHub token 通过 API 修改 `.github/workflows/**`，token 必须带 `workflow` 权限
@@ -52,12 +64,19 @@ node preview-server.cjs
 ## 自定义
 
 - **文字**：改 `index.html`
-- **配色**：改 `styles.css` 里 `:root` 的 `--bg` / `--cyan` / `--violet` / `--pink`
+- **配色**：改 `styles.css` 里 `:root` 的 `--bg` / `--amber` / `--ember` / `--gold` / `--text`
+- **背景图**：换掉 `assets/bg-fish.jpg`，透明度与暖色叠加在 `.backdrop__art` / `.backdrop__wash`
+- **背景音乐**：换掉 `assets/fishinthepool.mp3`（`index.html` 里 `<audio id="bgm">` 的 `src`）
 - **打字机文案**：改 `script.js` 里的 `lines` 数组
 - **头像**：改 `index.html` 中 `.profile__avatar img` 的 `src`
 - **动画节奏**：HTML 上的 `data-delay="80"`（毫秒）控制各区块入场先后
 
 ## 无障碍
 
-已适配 `prefers-reduced-motion`：系统开启「减少动态效果」时，
-所有入场动画与视差会关闭，内容直接呈现。
+已适配 `prefers-reduced-motion`：系统开启「减少动态效果」时，入场动画、视差与光斑动画会关闭。
+背景音乐不会自动播放（浏览器策略也不允许），入口门可用 Esc 跳过；键盘可完整操作小游戏。
+
+## 素材说明
+
+背景插画来自网络，图上带有「無断転載 & AI 学習禁止 / No AI training」标记。
+按需求已用于本站；若长期公开运营，建议替换为自有或已获授权的图片。字体、图标、脚本均为手写或系统自带。

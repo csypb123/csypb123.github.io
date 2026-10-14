@@ -6,7 +6,7 @@
 <title>杨鹏博 · 个人主页</title>
 <meta name="description" content="你好，我是杨鹏博，沈阳理工大学计算机科学与技术专业大一学生。正在认真打基础、不断尝试，持续更新中。">
 <meta name="author" content="杨鹏博">
-<meta name="theme-color" content="#070a14">
+<meta name="theme-color" content="#120a04">
 
 <!-- Open Graph / 分享卡片 -->
 <meta property="og:type" content="website">
@@ -15,10 +15,10 @@
 <meta property="og:image" content="https://avatars.githubusercontent.com/u/319321990?v=4">
 <meta name="twitter:card" content="summary_large_image">
 
-<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="./assets/favicon.svg">
-
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/favicon.svg">
 <link rel="stylesheet" href="styles.css">
+<script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
 
@@ -28,21 +28,42 @@
   <p class="preloader__text">正在加载……</p>
 </div>
 
+<!-- 入口门（JS 开启后才出现，可跳过） -->
+<div class="gate js-only" id="gate" hidden>
+  <div class="gate__inner">
+    <div class="gate__mark">杨</div>
+    <p class="gate__hello">Welcome</p>
+    <h1 class="gate__title">你好，我是<span class="grad-text">杨鹏博</span></h1>
+    <p class="gate__desc">写代码，也看番、也打游戏。</p>
+    <p class="gate__note">进入后会播放背景音乐，可随时在右上角关闭</p>
+    <button class="gate__btn" id="gateEnter" type="button">
+      <span>进入主页</span>
+      <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button class="gate__skip" id="gateSkip" type="button">不播音乐，直接浏览</button>
+  </div>
+</div>
+
 <!-- 顶部滚动进度条 -->
 <div class="scroll-progress" id="scrollProgress"></div>
 
-<!-- 背景装饰 -->
+<!-- 背景：插画 + 暖色叠加 -->
 <div class="backdrop" aria-hidden="true">
-  <div class="backdrop__grid"></div>
+  <div class="backdrop__art"></div>
+  <div class="backdrop__wash"></div>
   <div class="backdrop__blob backdrop__blob--1"></div>
   <div class="backdrop__blob backdrop__blob--2"></div>
   <div class="backdrop__blob backdrop__blob--3"></div>
+  <div class="backdrop__grid"></div>
   <div class="backdrop__noise"></div>
 </div>
 
+<!-- 背景音乐 -->
+<audio id="bgm" src="assets/fishinthepool.mp3" loop preload="none"></audio>
+
 <!-- 导航 -->
 <header class="nav" id="nav">
-  <div class="nav__inner">
+  <div class="nav__inner container">
     <a class="brand" href="#home">
       <span class="brand__mark">杨</span>
       <span class="brand__text">杨鹏博<em>.dev</em></span>
@@ -51,11 +72,18 @@
     <nav class="nav__links" id="navLinks" aria-label="主导航">
       <a href="#home">首页</a>
       <a href="#about">关于我</a>
+      <a href="#projects">项目</a>
+      <a href="#skills">技能</a>
       <a href="#interests">兴趣</a>
       <a href="#now">近况</a>
       <a href="#contact">联系</a>
       <span class="nav__pill" id="navPill" aria-hidden="true"></span>
     </nav>
+
+    <button class="bgm-toggle" id="bgmToggle" type="button" aria-pressed="false" aria-label="背景音乐开关">
+      <span class="bgm-toggle__bars" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="bgm-toggle__text">BGM</span>
+    </button>
 
     <button class="nav__toggle" id="navToggle" aria-label="打开菜单" aria-expanded="false">
       <span></span><span></span><span></span>
@@ -67,9 +95,7 @@
 
   <!-- ============ 首屏 ============ -->
   <section class="hero" id="home">
-    <div class="hero__glow" aria-hidden="true"></div>
-
-    <div class="hero__inner container">
+    <div class="hero__inner">
       <div class="hero__text" data-parallax="0.18">
         <p class="hero__eyebrow reveal" data-delay="0">
           <span class="dot"></span> 沈阳理工大学 · 计算机科学与技术
@@ -92,14 +118,14 @@
         <div class="hero__actions reveal" data-delay="320">
           <a class="btn btn--primary" href="#about">
             <span>了解我</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
           <a class="btn btn--ghost" href="counting-game.html">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5z"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor"/></svg>
             <span>玩个小游戏</span>
           </a>
           <a class="btn btn--ghost" href="https://github.com/csypb123" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z" fill="currentColor"/></svg>
             <span>GitHub</span>
           </a>
         </div>
@@ -110,7 +136,7 @@
             <span>大一在读</span>
           </li>
           <li>
-            <strong class="count" data-count="4" data-suffix="+">0</strong>
+            <strong class="count" data-count="6" data-suffix="+">0</strong>
             <span>喜爱作品</span>
           </li>
           <li>
@@ -133,7 +159,7 @@
           <p class="profile__meta">浙江台州 → 辽宁沈阳</p>
 
           <figure class="profile__pane">
-            <img src="./assets/landscape.svg" alt="晨雾中的山峰、湖泊与松林" width="1000" height="1200" loading="lazy">
+            <img src="assets/landscape.svg" alt="晨雾中的山峰、湖泊与松林" width="1000" height="1200" loading="lazy">
             <span class="profile__pane-shade" aria-hidden="true"></span>
             <figcaption>下一站，未知</figcaption>
           </figure>
@@ -176,6 +202,10 @@
             现在的我还没有特别擅长的技术，但正处在<strong>认真打基础、不断尝试</strong>的阶段。
             我希望在接下来的学习与实践中，慢慢找到自己真正感兴趣、愿意长期投入的方向。
           </p>
+          <p>
+            平时会看番、打游戏，也会把课上学到的东西做成能跑起来的小东西——
+            这个主页和里面的小游戏，就是最近的两次尝试。
+          </p>
           <p class="about__quote">
             “慢慢来，比较快。” —— 愿每一步都算数。
           </p>
@@ -205,8 +235,7 @@
         </div>
       </div>
 
-      <!-- 时间线 -->
-      <div class="timeline reveal" data-delay="120">
+      <div class="timeline">
         <div class="timeline__line" aria-hidden="true"><i id="timelineFill"></i></div>
         <ol class="timeline__list">
           <li class="timeline__item reveal" data-delay="80">
@@ -222,7 +251,7 @@
           <li class="timeline__item reveal" data-delay="240">
             <span class="timeline__dot"></span>
             <h4>认真打基础 · 现在</h4>
-            <p>学习编程基础，尝试各种小项目，记录自己的成长轨迹。</p>
+            <p>学编程基础，尝试各种小项目，记录自己的成长轨迹。</p>
           </li>
           <li class="timeline__item timeline__item--next reveal" data-delay="320">
             <span class="timeline__dot"></span>
@@ -234,11 +263,142 @@
     </div>
   </section>
 
+  <!-- ============ 项目 ============ -->
+  <section class="section" id="projects">
+    <div class="container">
+      <header class="section__head reveal">
+        <span class="section__index">02</span>
+        <h2 class="section__title grad-text">项目</h2>
+        <p class="section__sub">Projects</p>
+      </header>
+
+      <p class="section__lead reveal" data-delay="80">
+        数量不多，都是自己动手写出来、能真的跑起来的东西。
+      </p>
+
+      <div class="projects">
+        <article class="glass project reveal" data-delay="80">
+          <div class="project__top">
+            <span class="project__icon" aria-hidden="true">◎</span>
+            <span class="project__tag">可在线试玩</span>
+          </div>
+          <h3>数一数 · 限时计数小游戏</h3>
+          <p class="project__en">Counting Rush</p>
+          <p class="project__desc">
+            每轮 5 秒，数清画面里的目标图形：猜对进入下一轮，每 3 轮提升一次难度
+            （目标变多、干扰图形变多，还会出现运动、闪烁与成堆重叠），猜错或超时结束。
+            所有图形都画在 canvas 上，代码写在一个 HTML 文件里，没有任何依赖。
+          </p>
+          <div class="project__meta">
+            <span>Canvas 2D</span><span>原生 JS</span><span>零依赖</span>
+          </div>
+          <a class="project__link" href="counting-game.html">马上玩一局 <i aria-hidden="true">↗</i></a>
+        </article>
+
+        <article class="glass project reveal" data-delay="160">
+          <div class="project__top">
+            <span class="project__icon" aria-hidden="true">✎</span>
+            <span class="project__tag">本站</span>
+          </div>
+          <h3>个人主页</h3>
+          <p class="project__en">Personal Homepage</p>
+          <p class="project__desc">
+            就是你正在看的这一页：纯 HTML / CSS / JS 手写，没有框架、没有构建工具。
+            滚动动画只用 transform 与 opacity，由 IntersectionObserver 与 requestAnimationFrame 驱动；
+            推到 main 分支后由 GitHub Actions 自动发布到 GitHub Pages。
+          </p>
+          <div class="project__meta">
+            <span>HTML / CSS / JS</span><span>GitHub Actions</span><span>GitHub Pages</span>
+          </div>
+          <a class="project__link" href="https://github.com/csypb123/csypb123.github.io" target="_blank" rel="noopener">查看源码 <i aria-hidden="true">↗</i></a>
+        </article>
+
+        <article class="glass project reveal" data-delay="240">
+          <div class="project__top">
+            <span class="project__icon" aria-hidden="true">⌘</span>
+            <span class="project__tag">练习中</span>
+          </div>
+          <h3>课程练习与小工具</h3>
+          <p class="project__en">Practice</p>
+          <p class="project__desc">
+            跟着课程写的 C 语言练习、几段小脚本，用来把课上的概念自己动手实现一遍。
+            还没整理成型，先从把基础打稳开始。
+          </p>
+          <div class="project__meta">
+            <span>C 语言</span><span>基础练习</span><span>整理中</span>
+          </div>
+          <a class="project__link" href="https://github.com/csypb123?tab=repositories" target="_blank" rel="noopener">去 GitHub 看看 <i aria-hidden="true">↗</i></a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 技能 ============ -->
+  <section class="section" id="skills">
+    <div class="container">
+      <header class="section__head reveal">
+        <span class="section__index">03</span>
+        <h2 class="section__title grad-text">技能</h2>
+        <p class="section__sub">Skills</p>
+      </header>
+
+      <p class="section__lead reveal" data-delay="80">
+        如实标注当前水平，不虚报——进度条代表现在的熟练度，不代表上限。
+      </p>
+
+      <div class="skills">
+        <div class="glass skills__main reveal" data-delay="80">
+          <div class="skill">
+            <div class="skill__top">
+              <span class="skill__name">C 语言基础</span>
+              <span class="skill__level">在学 · 入门</span>
+            </div>
+            <span class="skill__track"><i style="--w:42%"></i></span>
+          </div>
+          <div class="skill">
+            <div class="skill__top">
+              <span class="skill__name">HTML / CSS</span>
+              <span class="skill__level">会用 · 够用</span>
+            </div>
+            <span class="skill__track"><i style="--w:62%"></i></span>
+          </div>
+          <div class="skill">
+            <div class="skill__top">
+              <span class="skill__name">JavaScript</span>
+              <span class="skill__level">会用 · 在进步</span>
+            </div>
+            <span class="skill__track"><i style="--w:50%"></i></span>
+          </div>
+          <div class="skill">
+            <div class="skill__top">
+              <span class="skill__name">Git / GitHub</span>
+              <span class="skill__level">会用 · 日常在用</span>
+            </div>
+            <span class="skill__track"><i style="--w:45%"></i></span>
+          </div>
+          <p class="skills__note">
+            这里没有可以吹的东西，只有正在长的那部分。会一项就写一项。
+          </p>
+        </div>
+
+        <div class="glass tools reveal" data-delay="160">
+          <h4>常用环境</h4>
+          <ul>
+            <li><span>VS Code</span><em>编辑器</em></li>
+            <li><span>Git / GitHub</span><em>版本管理</em></li>
+            <li><span>GitHub Actions</span><em>自动部署</em></li>
+            <li><span>Chrome DevTools</span><em>调试</em></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ 兴趣 ============ -->
   <section class="section" id="interests">
     <div class="container">
       <header class="section__head reveal">
-        <span class="section__index">02</span>
+        <span class="section__index">04</span>
         <h2 class="section__title grad-text">兴趣</h2>
         <p class="section__sub">Interests</p>
       </header>
@@ -252,7 +412,7 @@
           <h3 class="interest__label reveal">📺 番剧</h3>
           <div class="cards">
             <article class="glass card reveal" data-delay="80" data-tilt>
-              <div class="card__glow" style="--c1:#ff7ac6; --c2:#7a5cff"></div>
+              <div class="card__glow" style="--c1:#ff9d8a; --c2:#ff7a3d"></div>
               <h4>孤独摇滚！</h4>
               <p class="card__en">BOCCHI THE ROCK!</p>
               <p class="card__desc">社恐少女的一把吉他，把「不擅长」也弹成了热爱。</p>
@@ -260,7 +420,7 @@
             </article>
 
             <article class="glass card reveal" data-delay="160" data-tilt>
-              <div class="card__glow" style="--c1:#7ee8fa; --c2:#8f6bff"></div>
+              <div class="card__glow" style="--c1:#ffd894; --c2:#ffb455"></div>
               <h4>魔女之旅</h4>
               <p class="card__en">Wandering Witch</p>
               <p class="card__desc">灰之魔女走过许多国家，我看见的是「世界的多样性」。</p>
@@ -273,7 +433,7 @@
           <h3 class="interest__label reveal">🎮 游戏</h3>
           <div class="cards">
             <article class="glass card reveal" data-delay="80" data-tilt>
-              <div class="card__glow" style="--c1:#59c2ff; --c2:#a05cff"></div>
+              <div class="card__glow" style="--c1:#ffb455; --c2:#ff5f3d"></div>
               <h4>崩坏 3</h4>
               <p class="card__en">Honkai Impact 3rd</p>
               <p class="card__desc">为世界上所有的美好而战，也是我最早学会「坚持」的地方。</p>
@@ -281,7 +441,7 @@
             </article>
 
             <article class="glass card reveal" data-delay="160" data-tilt>
-              <div class="card__glow" style="--c1:#8b7cff; --c2:#ffd166"></div>
+              <div class="card__glow" style="--c1:#ffcf6b; --c2:#ff8a3d"></div>
               <h4>崩坏：星穹铁道</h4>
               <p class="card__en">Honkai: Star Rail</p>
               <p class="card__desc">坐上星穹列车，一站一站地看宇宙，也一站一站地看故事。</p>
@@ -289,7 +449,7 @@
             </article>
 
             <article class="glass card reveal" data-delay="240" data-tilt>
-              <div class="card__glow" style="--c1:#ff5f6d; --c2:#ffc371"></div>
+              <div class="card__glow" style="--c1:#ff8a5c; --c2:#ffd166"></div>
               <h4>Undertale</h4>
               <p class="card__en">UNDERTALE</p>
               <p class="card__desc">「你可以不战斗。」——它让我第一次认真思考游戏里的选择。</p>
@@ -297,7 +457,7 @@
             </article>
 
             <article class="glass card reveal" data-delay="320" data-tilt>
-              <div class="card__glow" style="--c1:#43e97b; --c2:#38f9d7"></div>
+              <div class="card__glow" style="--c1:#ffc978; --c2:#ff6f59"></div>
               <h4>精灵与萤火意志</h4>
               <p class="card__en">Ori and the Will of the Wisps</p>
               <p class="card__desc">手绘的森林、钢琴的旋律，美到会让人停下来只想看着光。</p>
@@ -309,11 +469,11 @@
     </div>
   </section>
 
-  <!-- ============ 近况 ============ -->
+  <!-- ============ 近况 + 音乐 ============ -->
   <section class="section" id="now">
     <div class="container">
       <header class="section__head reveal">
-        <span class="section__index">03</span>
+        <span class="section__index">05</span>
         <h2 class="section__title grad-text">近况</h2>
         <p class="section__sub">Now</p>
       </header>
@@ -339,16 +499,6 @@
         </div>
 
         <div class="now__list">
-          <a class="glass project reveal" data-delay="60" href="counting-game.html">
-            <span class="project__icon" aria-hidden="true">◎</span>
-            <div class="project__body">
-              <p class="project__eyebrow">MY FIRST LITTLE GAME</p>
-              <h4>数一数 · 限时计数小游戏</h4>
-              <p>每轮 5 秒，数清画面里的目标图形：猜对进入下一轮，每 3 轮难度递增，猜错或超时结束。用原生 Canvas 手写，单文件零依赖。</p>
-              <span class="project__cta">马上玩一局 <i aria-hidden="true">↗</i></span>
-            </div>
-          </a>
-
           <article class="glass tick reveal" data-delay="120">
             <span class="tick__icon">📚</span>
             <div><h4>在学习</h4><p>C 语言与计算机基础，慢慢把地基打稳。</p></div>
@@ -363,6 +513,87 @@
           </article>
         </div>
       </div>
+
+      <!-- 背景音乐 -->
+      <div class="glass bgm reveal js-only" id="bgmCard" data-delay="120">
+        <div class="bgm__head">
+          <div class="bgm__disc" aria-hidden="true"></div>
+          <div class="bgm__info">
+            <h4>背景音乐 · fishinthepool</h4>
+            <p>看页面时循环播放的一段 BGM，也是这个页面的氛围来源。</p>
+          </div>
+        </div>
+
+        <canvas class="bgm__wave" id="bgmWave" width="900" height="144" aria-hidden="true"></canvas>
+
+        <div class="bgm__controls">
+          <button class="bgm__btn bgm__btn--main" id="bgmPlay" type="button">▶ 播放</button>
+          <button class="bgm__btn" id="bgmMute" type="button">🔇 静音</button>
+          <button class="bgm__btn" id="bgmRestart" type="button">↻ 重新开始</button>
+        </div>
+
+        <label class="bgm__vol">
+          <span>音量</span>
+          <input type="range" id="bgmVol" min="0" max="100" value="45" aria-label="音量">
+          <span id="bgmVolText" class="mono">45%</span>
+        </label>
+
+        <p class="bgm__tip">
+          浏览器不允许网页自动出声，所以默认不播放；点一下播放即可。
+          右上角的 BGM 按钮随时可以开关。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 关于本站 ============ -->
+  <section class="section" id="site">
+    <div class="container">
+      <header class="section__head reveal">
+        <span class="section__index">06</span>
+        <h2 class="section__title grad-text">关于本站</h2>
+        <p class="section__sub">This Site</p>
+      </header>
+
+      <p class="section__lead reveal" data-delay="80">
+        这个网站本身也是我的练习之一，所以顺便把做法写在这里。
+      </p>
+
+      <div class="sitelist">
+        <article class="glass sitecard reveal" data-delay="80">
+          <h4>手写，不用框架</h4>
+          <p>纯 HTML / CSS / JavaScript，没有框架、没有构建工具、没有 CDN，
+            资源都在仓库里，克隆下来双击就能看。</p>
+        </article>
+        <article class="glass sitecard reveal" data-delay="140">
+          <h4>动画只用 transform 与 opacity</h4>
+          <p>滚动入场交给 IntersectionObserver，视差与进度条交给 requestAnimationFrame 节流，
+            不触发重排，所以在手机上也不卡。</p>
+        </article>
+        <article class="glass sitecard reveal" data-delay="200">
+          <h4>背景不用 fixed 附件</h4>
+          <p>插画与暖色叠加放在固定定位的图层里，而不是 background-attachment: fixed——
+            后者在移动端容易掉帧。</p>
+        </article>
+        <article class="glass sitecard reveal" data-delay="260">
+          <h4>推上去就自动发布</h4>
+          <p>推到 main 分支后，GitHub Actions 会把静态文件打包并发布到 GitHub Pages，
+            通常一两分钟生效。</p>
+        </article>
+      </div>
+
+      <div class="metrics">
+        <div class="glass metric reveal" data-delay="80"><strong class="count" data-count="0" data-suffix="">0</strong><span>第三方依赖</span></div>
+        <div class="glass metric reveal" data-delay="120"><strong>5s</strong><span>小游戏每轮限时</span></div>
+        <div class="glass metric reveal" data-delay="160"><strong class="count" data-count="2" data-suffix="">0</strong><span>手写项目</span></div>
+        <div class="glass metric reveal" data-delay="200"><strong>100%</strong><span>持续更新</span></div>
+      </div>
+
+      <p class="section__lead reveal" data-delay="220" style="margin:34px 0 0">
+        我按「创新性 45 / 美观性 30 / 完整性 20 / 部署与可用性 5」给这个站做了自评，
+        打分标准、依据和待改进项都写在
+        <a class="grad-text" href="scorecard.html" style="font-weight:700">评分卡</a> 里。
+      </p>
     </div>
   </section>
 
@@ -375,11 +606,11 @@
         <p class="contact__desc">无论是番剧、游戏，还是学习路上的问题，都可以来找我聊聊。</p>
         <div class="contact__actions">
           <a class="btn btn--primary" href="https://github.com/csypb123" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z" fill="currentColor"/></svg>
             <span>github.com/csypb123</span>
           </a>
           <a class="btn btn--ghost" href="#home">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span>回到顶部</span>
           </a>
         </div>
@@ -398,7 +629,7 @@
 
 <!-- 回到顶部 -->
 <button class="to-top" id="toTop" aria-label="回到顶部">
-  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
 </button>
 
 <script src="script.js"></script>

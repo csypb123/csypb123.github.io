@@ -40,10 +40,12 @@
     var text = el.textContent.trim();
     el.textContent = '';
     var frag = document.createDocumentFragment();
+    var n = text.length || 1;
     Array.prototype.forEach.call(text, function (ch, i) {
       var span = document.createElement('span');
       span.className = 'char';
       span.style.setProperty('--i', i);
+      span.style.setProperty('--n', n);   // 供渐变按字序错位使用
       span.textContent = ch;
       frag.appendChild(span);
     });
@@ -60,6 +62,7 @@
       '计算机科学与技术 · 大一在读',
       '正在认真打基础，不断尝试',
       '喜欢番剧、游戏，还有安静写代码的夜晚',
+      '最近在做：一个限时计数小游戏',
       '正在学习，正在探索，持续更新中'
     ];
 
@@ -85,6 +88,185 @@
         return window.setTimeout(tick, 420);
       }
       window.setTimeout(tick, 42);
+    })();
+  })();
+
+  /* ---------------------------------------------------------
+     4b. 技能条进度
+     --------------------------------------------------------- */
+  var skills = $$('.skill');
+  if (skills.length) {
+    if (hasIO && !reduceMotion) {
+      var sIO = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('is-in'); sIO.unobserve(e.target); }
+        });
+      }, { threshold: 0.4 });
+      skills.forEach(function (el) { sIO.observe(el); });
+    } else {
+      skills.forEach(function (el) { el.classList.add('is-in'); });
+    }
+  }
+
+  /* ---------------------------------------------------------
+     4c. 背景音乐：入口门 + 播放控制 + 波形可视化
+     --------------------------------------------------------- */
+  (function bgm() {
+    var audio   = $('#bgm');
+    var gate    = $('#gate');
+    var enter   = $('#gateEnter');
+    var skip    = $('#gateSkip');
+    var toggle  = $('#bgmToggle');
+    var playBtn = $('#bgmPlay');
+    var muteBtn = $('#bgmMute');
+    var restart = $('#bgmRestart');
+    var vol     = $('#bgmVol');
+    var volText = $('#bgmVolText');
+    var card    = $('#bgmCard');
+    var canvas  = $('#bgmWave');
+    if (!audio) return;
+
+    var STORE = 'ypb-bgm';
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(STORE) || '{}') || {}; } catch (e) { saved = {}; }
+    function save() {
+      try {
+        localStorage.setItem(STORE, JSON.stringify({ muted: audio.muted, vol: audio.volume, gate: gateSkipped }));
+      } catch (e) {}
+    }
+    var gateSkipped = !!saved.gate;
+
+    audio.volume = typeof saved.vol === 'number' ? saved.vol : 0.45;
+    audio.muted  = !!saved.muted;
+    if (vol) vol.value = Math.round(audio.volume * 100);
+    if (volText) volText.textContent = Math.round(audio.volume * 100) + '%';
+
+    function syncUI() {
+      var playing = !audio.paused && !audio.ended;
+      if (toggle) {
+        toggle.classList.toggle('is-playing', playing);
+        toggle.setAttribute('aria-pressed', String(playing));
+      }
+      if (card) card.classList.toggle('is-playing', playing);
+      if (playBtn) playBtn.textContent = playing ? '⏸ 暂停' : '▶ 播放';
+      if (muteBtn) muteBtn.textContent = audio.muted ? '🔊 取消静音' : '🔇 静音';
+    }
+
+    function play() { var p = audio.play(); if (p && p.catch) p.catch(function () {}); syncUI(); }
+    function pause() { audio.pause(); syncUI(); }
+    function flip() { if (audio.paused) play(); else pause(); }
+
+    /* 入口门 */
+    if (gate) {
+      if (gateSkipped) {
+        gate.hidden = true;
+      } else {
+        gate.hidden = false;
+        document.body.classList.add('is-locked');
+        var open = function (withMusic) {
+          gate.classList.add('is-open');
+          gateSkipped = true;
+          document.body.classList.remove('is-locked');
+          window.setTimeout(function () { gate.hidden = true; }, 800);
+          if (withMusic) play();
+          save();
+        };
+        if (enter) enter.addEventListener('click', function () { open(true); });
+        if (skip)  skip.addEventListener('click', function () { open(false); });
+        // 键盘用户也能快速离开
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && !gate.hidden) open(false);
+        });
+      }
+    }
+
+    /* 播放 / 暂停 / 静音 / 音量 */
+    if (toggle)  toggle.addEventListener('click', flip);
+    if (playBtn) playBtn.addEventListener('click', flip);
+    if (muteBtn) muteBtn.addEventListener('click', function () { audio.muted = !audio.muted; syncUI(); save(); });
+    if (restart) restart.addEventListener('click', function () { try { audio.currentTime = 0; } catch (e) {} play(); });
+    if (vol) vol.addEventListener('input', function () {
+      audio.volume = Math.min(Math.max(parseInt(vol.value, 10) / 100 || 0, 0), 1);
+      if (volText) volText.textContent = Math.round(audio.volume * 100) + '%';
+      if (audio.volume > 0 && audio.muted) audio.muted = false;
+      syncUI(); save();
+    });
+    if (volText && vol) volText.textContent = Math.round(audio.volume * 100) + '%';
+
+    audio.addEventListener('play', syncUI);
+    audio.addEventListener('pause', syncUI);
+    audio.addEventListener('volumechange', syncUI);
+    // 连播偶发失败时继续放
+    audio.addEventListener('ended', function () { play(); });
+    syncUI();
+
+    /* 波形可视化：AnalyserNode 接入 MediaElementSource。
+       若浏览器不支持（或创建失败），退化为一条呼吸的静态波形。 */
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var analyser = null, freq = null, ac = null;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) {
+        ac = new AC();
+        var src = ac.createMediaElementSource(audio);
+        analyser = ac.createAnalyser();
+        analyser.fftSize = 128;
+        analyser.smoothingTimeConstant = 0.82;
+        src.connect(analyser);
+        analyser.connect(ac.destination);
+        freq = new Uint8Array(analyser.frequencyBinCount);
+      }
+    } catch (e) { analyser = null; }
+    if (analyser) {
+      audio.addEventListener('play', function () { if (ac && ac.state === 'suspended') ac.resume(); });
+    }
+
+    var W = 0, H = 0;
+    function fit() {
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var r = canvas.getBoundingClientRect();
+      W = Math.max(1, Math.round(r.width));
+      H = Math.max(1, Math.round(r.height));
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    fit();
+    window.addEventListener('resize', fit, { passive: true });
+
+    var phase = 0;
+    (function draw() {
+      requestAnimationFrame(draw);
+      if (!W || document.hidden) return;
+      phase += 0.02;
+      var active = !audio.paused && !audio.ended && !audio.muted && audio.volume > 0;
+      ctx.clearRect(0, 0, W, H);
+
+      var bars = 56, gap = 3;
+      var bw = (W - gap * (bars - 1)) / bars;
+      if (bw < 1) { bars = Math.max(8, Math.floor(W / 4)); bw = (W - gap * (bars - 1)) / bars; }
+      if (analyser && active) { analyser.getByteFrequencyData(freq); }
+
+      for (var i = 0; i < bars; i++) {
+        var v;
+        if (analyser && active) {
+          var idx = Math.floor(Math.pow(i / bars, 1.35) * (freq.length - 1));
+          v = freq[idx] / 255;
+        } else {
+          var t = i / bars;
+          v = 0.10 + 0.07 * Math.abs(Math.sin(t * 5.4 + phase)) + 0.05 * Math.abs(Math.sin(t * 11 + phase * 0.7));
+        }
+        var bh = Math.max(2, v * (H - 16));
+        var x = i * (bw + gap);
+        var y = H / 2 - bh / 2;
+        var g = ctx.createLinearGradient(0, y, 0, y + bh);
+        g.addColorStop(0, 'rgba(255,216,148,.92)');
+        g.addColorStop(1, 'rgba(255,122,61,.75)');
+        ctx.fillStyle = g;
+        if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(x, y, bw, bh, bw / 2); ctx.fill(); }
+        else ctx.fillRect(x, y, bw, bh);
+      }
     })();
   })();
 
