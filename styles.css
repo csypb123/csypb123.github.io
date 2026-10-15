@@ -95,64 +95,6 @@ html:not(.js) .js-only { display: none !important; }
 .skip:focus { top: 14px; }
 
 /* ---------------------------------------------------------
-   2. 加载动画
-   关键：必须能在没有 JS 的情况下自己消失。
-   script.js 只负责「提前」移除它，CSS 动画保证它绝不会永久挡住页面。
-   --------------------------------------------------------- */
-.preloader {
-  position: fixed; inset: 0; z-index: 500;
-  display: grid; place-items: center; gap: 18px;
-  background: var(--bg);
-  transition: opacity .7s var(--ease), visibility .7s;
-  /* 1.8s 后自动淡出并让出点击，不依赖任何脚本 */
-  animation: preloaderAway .7s ease 1.8s forwards;
-}
-.preloader.is-done { opacity: 0; visibility: hidden; }
-@keyframes preloaderAway {
-  to { opacity: 0; visibility: hidden; pointer-events: none; }
-}
-.preloader__ring {
-  width: 54px; height: 54px; border-radius: 50%;
-  border: 2px solid rgba(109, 77, 250, .18);
-  border-top-color: var(--violet);
-  animation: spin 1s linear infinite;
-}
-.preloader__text { color: var(--text-3); font-size: .84rem; letter-spacing: .18em; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ---------------------------------------------------------
-   3. 入口门（需要 JS 才出现）
-   --------------------------------------------------------- */
-.gate {
-  position: fixed; inset: 0; z-index: 450;
-  display: grid; place-items: center; padding: 24px;
-  background:
-    radial-gradient(120% 100% at 50% 0%, rgba(109, 77, 250, .16), transparent 60%),
-    linear-gradient(180deg, #ffffff, #eef1fb);
-  transition: opacity .75s var(--ease), transform .75s var(--ease), visibility .75s;
-}
-.gate.is-open { opacity: 0; transform: scale(1.04); visibility: hidden; pointer-events: none; }
-.gate__inner { text-align: center; max-width: 560px; }
-.gate__mark {
-  width: 66px; height: 66px; margin: 0 auto 22px; border-radius: 20px;
-  display: grid; place-items: center; font-weight: 800; font-size: 1.6rem; color: #fff;
-  background: var(--grad); box-shadow: 0 22px 46px -20px rgba(109, 77, 250, .95);
-}
-.gate__hello { font-size: .82rem; letter-spacing: .3em; color: var(--text-3); text-transform: uppercase; }
-.gate__title { margin-top: 10px; font-size: clamp(1.7rem, 5vw, 2.5rem); letter-spacing: -.01em; }
-.gate__desc { margin-top: 14px; color: var(--text-2); font-size: .95rem; }
-.gate__note { margin-top: 8px; color: var(--text-3); font-size: .82rem; }
-.gate__btn {
-  margin-top: 26px; display: inline-flex; align-items: center; gap: 10px;
-  padding: 14px 30px; border-radius: 999px; font-weight: 700; color: #fff;
-  background: var(--grad); box-shadow: 0 20px 44px -18px rgba(109, 77, 250, .95);
-  transition: transform .5s var(--ease), box-shadow .5s var(--ease);
-}
-.gate__btn:hover { transform: translateY(-3px); box-shadow: 0 28px 56px -18px rgba(109, 77, 250, 1); }
-.gate__skip { display: block; margin-top: 16px; color: var(--text-3); font-size: .82rem; }
-.gate__hint { margin-top: 6px; color: var(--text-3); font-size: .78rem; opacity: .8; }
-
-/* ---------------------------------------------------------
    4. 滚动进度条
    --------------------------------------------------------- */
 .scroll-progress {
@@ -661,7 +603,7 @@ html:not(.js) .reveal { opacity: 1; transform: none; filter: none; animation: no
 
 /* 打印：去掉背景与装饰，保证正文可读 */
 @media print {
-  .backdrop, .nav, .to-top, .scroll-progress, .preloader, .gate, .bgm, .scroll-hint { display: none !important; }
+  .backdrop, .nav, .to-top, .scroll-progress, .preloader, .bgm, .scroll-hint { display: none !important; }
   body { background: #fff; color: #151a2e; }
   .glass { background: #fff; border-color: #d8dced; outline-color: #d8dced; box-shadow: none; backdrop-filter: none; }
   .grad-text, .hero__facts strong, .metric strong, .now__main h3, .timeline__item--next h4 {

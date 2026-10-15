@@ -17,7 +17,7 @@
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
-<link rel="stylesheet" href="styles.css?v=20261015b">
+<link rel="stylesheet" href="styles.css?v=20261016">
 <script>document.documentElement.className += ' js';</script>
 </head>
 <body>
@@ -28,28 +28,10 @@
   <p class="preloader__text">正在加载……</p>
 </div>
 
-<!-- 入口门（JS 开启后才出现，可跳过） -->
-<div class="gate js-only" id="gate" hidden>
-  <div class="gate__inner">
-    <div class="gate__mark">杨</div>
-    <p class="gate__hello">Welcome</p>
-    <h1 class="gate__title">你好，我是<span class="grad-text">杨鹏博</span></h1>
-    <p class="gate__desc">写代码，也看番、也打游戏。</p>
-    <p class="gate__note">进入后会播放背景音乐，可随时在右上角关闭</p>
-    <button class="gate__btn" id="gateEnter" type="button">
-      <span>进入主页</span>
-      <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
-    <button class="gate__skip" id="gateSkip" type="button">不播音乐，直接浏览</button>
-    <p class="gate__hint">也可以按 Esc 或 Enter 跳过</p>
-  </div>
-</div>
-
-<!-- 兜底脚本：保证加载动画一定消失、入口门一定能关。
+<!-- 兜底脚本：保证加载动画一定消失。
      放在这里是为了让 script.js 尚未加载完（或被缓存阻断）时页面已经可用。 -->
 <script>
 (function () {
-  /* 1) 加载动画兜底移除（CSS 动画也会淡出它，这里再确保从 DOM 移除） */
   var pl = document.getElementById('preloader');
   function killPreloader() {
     if (!pl) return;
@@ -58,47 +40,6 @@
   }
   setTimeout(killPreloader, 2500);
   window.addEventListener('load', function () { setTimeout(killPreloader, 400); });
-
-  /* 2) 入口门兜底 */
-  var gate = document.getElementById('gate');
-  if (!gate) return;
-  var KEY = 'ypb-bgm';
-  var enter = document.getElementById('gateEnter');
-  var skip = document.getElementById('gateSkip');
-
-  function state() { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } }
-  function remember() {
-    try { var s = state(); s.gate = true; localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
-  }
-  function dismiss(withMusic) {
-    // 主脚本在的话就交给它（它会顺便放音乐），否则自己关
-    if (window.__closeGate) { window.__closeGate(withMusic); return; }
-    try { gate.classList.add('is-open'); } catch (e) {}
-    try { document.body.classList.remove('is-locked'); } catch (e) {}
-    setTimeout(function () { try { gate.hidden = true; } catch (e) {} }, 800);
-    remember();
-    window.__gateDone = true;
-    if (withMusic) {
-      var a = document.getElementById('bgm');
-      if (a) { try { var p = a.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
-    }
-  }
-
-  if (state().gate) { gate.hidden = true; window.__gateDone = true; return; }
-
-  gate.hidden = false;
-  document.body.classList.add('is-locked');
-  window.__gateBound = true;
-
-  if (enter) enter.addEventListener('click', function (ev) { ev.preventDefault(); dismiss(true); });
-  if (skip)  skip.addEventListener('click', function (ev) { ev.preventDefault(); dismiss(false); });
-  // 点门上的空白处也能进
-  gate.addEventListener('click', function (ev) {
-    if (ev.target === gate || (ev.target.classList && ev.target.classList.contains('gate__inner'))) dismiss(false);
-  });
-  document.addEventListener('keydown', function (ev) {
-    if ((ev.key === 'Escape' || ev.key === 'Enter') && !gate.hidden) dismiss(false);
-  });
 })();
 </script>
 
@@ -691,6 +632,6 @@
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
 </button>
 
-<script src="script.js?v=20261015b"></script>
+<script src="script.js?v=20261016"></script>
 </body>
 </html>

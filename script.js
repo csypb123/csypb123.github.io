@@ -109,13 +109,11 @@
   }
 
   /* ---------------------------------------------------------
-     4c. 背景音乐：入口门 + 播放控制 + 波形可视化
+     4c. 背景音乐：播放控制 + 波形可视化
+     （入口门已移除，音乐改由导航栏的 BGM 按钮与近况区的播放卡控制）
      --------------------------------------------------------- */
   (function bgm() {
     var audio   = $('#bgm');
-    var gate    = $('#gate');
-    var enter   = $('#gateEnter');
-    var skip    = $('#gateSkip');
     var toggle  = $('#bgmToggle');
     var playBtn = $('#bgmPlay');
     var muteBtn = $('#bgmMute');
@@ -131,10 +129,9 @@
     try { saved = JSON.parse(localStorage.getItem(STORE) || '{}') || {}; } catch (e) { saved = {}; }
     function save() {
       try {
-        localStorage.setItem(STORE, JSON.stringify({ muted: audio.muted, vol: audio.volume, gate: gateSkipped }));
+        localStorage.setItem(STORE, JSON.stringify({ muted: audio.muted, vol: audio.volume }));
       } catch (e) {}
     }
-    var gateSkipped = !!saved.gate;
 
     audio.volume = typeof saved.vol === 'number' ? saved.vol : 0.45;
     audio.muted  = !!saved.muted;
@@ -163,39 +160,7 @@
     function pause() { try { audio.pause(); } catch (e) {} syncUI(); }
     function flip() { if (audio.paused) play(); else pause(); }
 
-    /* 入口门 */
-    if (gate) {
-      // 关门的动作写死在 finally 里：不管音乐能不能播，都必须能进门
-      function closeGate(withMusic) {
-        try { gate.classList.add('is-open'); } catch (e) {}
-        gateSkipped = true;
-        try { document.body.classList.remove('is-locked'); } catch (e) {}
-        window.setTimeout(function () { try { gate.hidden = true; } catch (e) {} }, 800);
-        if (withMusic) play();
-        try { save(); } catch (e) {}
-        // 外部脚本万一加载失败，内联兜底也必须知道门已经关了
-        window.__gateDone = true;
-      }
-
-      if (gateSkipped) {
-        gate.hidden = true;
-        window.__gateDone = true;
-      } else {
-        gate.hidden = false;
-        try { document.body.classList.add('is-locked'); } catch (e) {}
-        if (window.__gateBound) {
-          // 内联兜底已经绑过监听器，这里只把逻辑接过来
-          window.__closeGate = closeGate;
-        } else {
-          if (enter) enter.addEventListener('click', function () { closeGate(true); });
-          if (skip)  skip.addEventListener('click', function () { closeGate(false); });
-          document.addEventListener('keydown', function (e) {
-            if ((e.key === 'Escape' || e.key === 'Enter') && !gate.hidden) closeGate(false);
-          });
-          window.__closeGate = closeGate;
-        }
-      }
-    }
+    // 入口门已移除：进来就是主页，背景音乐由右上角的 BGM 按钮控制
 
     /* 播放 / 暂停 / 静音 / 音量 */
     if (toggle)  toggle.addEventListener('click', flip);
