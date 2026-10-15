@@ -233,6 +233,9 @@ html:not(.js) .js-only { display: none !important; }
   0%, 100% { box-shadow: 0 0 0 0 rgba(109, 77, 250, .35); }
   50% { box-shadow: 0 0 0 6px rgba(109, 77, 250, 0); }
 }
+/* 正在下载背景音乐时的提示态 */
+.bgm-toggle.is-loading { opacity: .75; }
+.bgm-toggle.is-loading::after { content: "载入中…"; font-size: .78rem; margin-left: 2px; }
 .bgm-toggle svg { width: 15px; height: 15px; flex: none; }
 .bgm-toggle__bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
 .bgm-toggle__bars i { width: 2.5px; height: 4px; border-radius: 2px; background: currentColor; }

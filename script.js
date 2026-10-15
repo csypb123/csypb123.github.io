@@ -122,6 +122,7 @@
     var volText = $('#bgmVolText');
     var card    = $('#bgmCard');
     var canvas  = $('#bgmWave');
+    var bgmTip  = $('#bgmTip');
     if (!audio) return;
 
     var STORE = 'ypb-bgm';
@@ -131,6 +132,38 @@
       try {
         localStorage.setItem(STORE, JSON.stringify({ muted: audio.muted, vol: audio.volume }));
       } catch (e) {}
+    }
+
+    /* ---------------------------------------------------------
+       边看边预载：把 mp3 提前整段取下来，点播放时立刻出声
+       （原来 preload="none"，点了才开始下载，慢网络要等十几秒）
+       --------------------------------------------------------- */
+    var audioReady = false;
+    function setHint(text) { if (bgmTip) bgmTip.textContent = text; }
+
+    function preloadAudio() {
+      if (audioReady) return;
+      var src = audio.getAttribute('src');
+      if (!src || !window.fetch || !window.URL || !URL.createObjectURL) return;
+      fetch(src, { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.blob();
+      }).then(function (blob) {
+        if (!blob || blob.size < 1024) throw new Error('文件异常');
+        audioReady = true;
+        audio.dataset.ready = '1';
+        setHint('背景音乐已就绪（' + Math.round(blob.size / 1024) + ' KB），点右上角 BGM 按钮即可播放。');
+        // 正在播放就别打断（慢网络重新载入反而更卡），下次打开直接用缓存
+        if (!audio.paused && !audio.ended) return;
+        var url = URL.createObjectURL(blob);
+        var at = audio.currentTime;
+        audio.src = url;
+        audio.load();
+        if (at > 0.3) { try { audio.currentTime = at; } catch (e) {} }
+        syncUI();
+      }).catch(function (err) {
+        setHint('背景音乐预载失败（' + (err && err.message ? err.message : '网络') + '），点播放时会现场下载，可能要等几秒。');
+      });
     }
 
     audio.volume = typeof saved.vol === 'number' ? saved.vol : 0.45;
@@ -214,6 +247,30 @@
       audio.volume = 0.4;
     }
     autoStart();
+
+    /* 页面稍稳定后就开始预载，尽量在用户点播放之前把整段音乐备好
+       （等 load 事件太晚：慢网络上用户往往在图片加载完之前就点了播放） */
+    function schedulePreload() {
+      window.setTimeout(function () {
+        if (window.requestIdleCallback) window.requestIdleCallback(function () { preloadAudio(); }, { timeout: 1500 });
+        else preloadAudio();
+      }, 900);
+    }
+    if (document.readyState === 'complete') schedulePreload();
+    else window.addEventListener('load', schedulePreload);
+
+    /* 播放时如果还没预载好，给出可见提示，避免"点了没反应"的错觉 */
+    audio.addEventListener('waiting', function () {
+      if (!audioReady && toggle) toggle.classList.add('is-loading');
+      if (!audioReady) setHint('正在下载背景音乐……下载完成后会自动开始播放。');
+    });
+    audio.addEventListener('playing', function () {
+      if (toggle) toggle.classList.remove('is-loading');
+      if (!audioReady) setHint('背景音乐正在播放。');
+    });
+    audio.addEventListener('error', function () {
+      setHint('背景音乐加载失败，可能是网络问题，稍后再试。');
+    });
 
     /* 播放 / 暂停 / 静音 / 音量 */
     if (toggle)  toggle.addEventListener('click', flip);

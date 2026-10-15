@@ -17,7 +17,7 @@
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
-<link rel="stylesheet" href="styles.css?v=20261017">
+<link rel="stylesheet" href="styles.css?v=20261019">
 <script>document.documentElement.className += ' js';</script>
 </head>
 <body>
@@ -59,7 +59,8 @@
 </div>
 
 <!-- 背景音乐 -->
-<audio id="bgm" src="assets/fishinthepool.mp3" loop preload="none"></audio>
+<!-- preload=metadata：先取头部信息；整段音乐会由脚本在页面空闲时预载，点播放即可立刻出声 -->
+<audio id="bgm" src="assets/fishinthepool.mp3" loop preload="metadata"></audio>
 
 <!-- 导航 -->
 <header class="nav" id="nav">
@@ -538,7 +539,7 @@
           <span id="bgmVolText" class="mono">45%</span>
         </label>
 
-        <p class="bgm__tip">
+        <p class="bgm__tip" id="bgmTip">
           进页面会尽量自动播放：浏览器允许就直接出声；不允许时会先静音播放，
           页面上会出现「点击开启声音」的提示，点任意位置即可出声。
           右上角的 BGM 按钮随时可以开关。
@@ -633,6 +634,6 @@
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
 </button>
 
-<script src="script.js?v=20261017"></script>
+<script src="script.js?v=20261019"></script>
 </body>
 </html>
