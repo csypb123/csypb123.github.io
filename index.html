@@ -17,7 +17,7 @@
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
-<link rel="stylesheet" href="styles.css?v=20261021">
+<link rel="stylesheet" href="styles.css?v=20261022">
 <script>document.documentElement.className += ' js';</script>
 </head>
 <body>
@@ -182,9 +182,9 @@
             <span>了解我</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
-          <a class="btn btn--ghost" href="counting-game.html">
+          <a class="btn btn--ghost" href="2048.html">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor"/></svg>
-            <span>玩个小游戏</span>
+            <span>玩 2048</span>
           </a>
           <a class="btn btn--ghost" href="https://github.com/csypb123" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z" fill="currentColor"/></svg>
@@ -339,17 +339,34 @@
       </p>
 
       <div class="projects">
-        <article class="glass project reveal" data-delay="80">
+        <article class="glass project reveal" data-delay="60">
+          <div class="project__top">
+            <span class="project__icon" aria-hidden="true">⊞</span>
+            <span class="project__tag">可在线试玩</span>
+          </div>
+          <h3>2048 · 数字合并</h3>
+          <p class="project__en">2048</p>
+          <p class="project__desc">
+            经典的数字合并玩法：方向键或滑动屏幕，把相同数字并成更大的数字，目标是拼出 2048。
+            带撤销、最高分记录与合并动画，纯手写、零依赖，手机上直接滑动就能玩。
+          </p>
+          <div class="project__meta">
+            <span>原生 JS</span><span>键盘 + 触控</span><span>零依赖</span>
+          </div>
+          <a class="project__link" href="2048.html">马上玩一局 <i aria-hidden="true">↗</i></a>
+        </article>
+
+        <article class="glass project reveal" data-delay="120">
           <div class="project__top">
             <span class="project__icon" aria-hidden="true">◎</span>
             <span class="project__tag">可在线试玩</span>
           </div>
-          <h3>数一数 · 限时计数小游戏</h3>
+          <h3>数一数 · 限时计数</h3>
           <p class="project__en">Counting Rush</p>
           <p class="project__desc">
             每轮 5 秒，数清画面里的目标图形：猜对进入下一轮，每 3 轮提升一次难度
             （目标变多、干扰图形变多，还会出现运动、闪烁与成堆重叠），猜错或超时结束。
-            所有图形都画在 canvas 上，代码写在一个 HTML 文件里，没有任何依赖。
+            所有图形都画在 canvas 上，代码写在一个 HTML 文件里。
           </p>
           <div class="project__meta">
             <span>Canvas 2D</span><span>原生 JS</span><span>零依赖</span>
@@ -357,7 +374,7 @@
           <a class="project__link" href="counting-game.html">马上玩一局 <i aria-hidden="true">↗</i></a>
         </article>
 
-        <article class="glass project reveal" data-delay="160">
+        <article class="glass project reveal" data-delay="180">
           <div class="project__top">
             <span class="project__icon" aria-hidden="true">✎</span>
             <span class="project__tag">本站</span>
@@ -695,6 +712,6 @@
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
 </button>
 
-<script src="script.js?v=20261021"></script>
+<script src="script.js?v=20261022"></script>
 </body>
 </html>

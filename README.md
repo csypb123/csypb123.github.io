@@ -14,6 +14,7 @@
 | `styles.css` | 全部样式，配色集中在顶部 `:root`（改主题基本只动这里） |
 | `script.js` | 入口门、背景音乐（预载 / 自动播放）、滚动动画与交互（原生 JS，无第三方库） |
 | `scorecard.html` | 评分卡：逐项打分依据、与参考站对比、待改进项 |
+| `2048.html` | 2048 数字合并小游戏（键盘 + 触控，单文件零依赖） |
 | `counting-game.html` | 「数一数」限时计数小游戏（Canvas 手写，单文件零依赖） |
 | `assets/bg-light.jpg` | 整页背景插画（1280×1920，约 280 KB，用 multiply 混合融进白底） |
 | `assets/fishinthepool.mp3` | 背景音乐 |
@@ -30,6 +31,15 @@
 - **滚动动画**：逐字上浮、打字机、滚动显现、背景视差、时间线进度、技能条填充、卡片 3D 倾斜。
 - **背景处理**：插画用 `mix-blend-mode: multiply` 铺在白底上，画面清晰但插画自身的白底不会变成一块灰；再叠一层 `mix-blend-mode: color` 的蓝紫渐变统一色调，白色柔光保证正文对比度。
 - **性能取舍**：动画只用 `transform` 与 `opacity`；不用 `background-attachment: fixed`（改为固定定位图层），避免移动端掉帧。
+
+## 小游戏：2048
+
+<https://csypb123.github.io/2048.html>
+
+- 方向键 / WASD 移动，手机上直接滑动；`Ctrl+Z` 撤销一步
+- 相同数字相遇即合并，拼出 **2048** 后可以继续挑战更大的数字
+- 带撤销（保留最近 40 步）、最高分记录（localStorage）、出现与合并动画
+- 纯手写、零依赖，棋盘用 CSS 变量定义几何，方块用 `transform` 定位以获得顺滑动画
 
 ## 小游戏：数一数
 
@@ -53,7 +63,7 @@ node preview-server.cjs
 推送到 `main` 分支即自动发布，工作流见 `.github/workflows/deploy.yml`
 （GitHub Actions → `actions/deploy-pages`），通常 1–3 分钟生效。
 
-> **注意**：工作流只把 `index.html`、`scorecard.html`、`counting-game.html`、`styles.css`、
+> **注意**：工作流只把 `index.html`、`scorecard.html`、`2048.html`、`counting-game.html`、`styles.css`、
 > `script.js`、`.nojekyll`、`assets/`、`README.md` 拷进发布产物。**新增页面时必须同步修改
 > `.github/workflows/deploy.yml` 里的 `cp` 那一行**，否则线上会 404。
 
