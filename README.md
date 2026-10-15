@@ -1,9 +1,10 @@
 # 杨鹏博 · 个人主页
 
-纯静态、零依赖的个人主页：**暖色调**（琥珀 → 橙红）、原创插画做整页背景、玻璃拟态，
+纯静态、零依赖的个人主页：**白底 + 蓝紫渐变**、插画铺满整页背景、玻璃拟态，
 以及一整套丝滑的滚动动画，附带一个可在线试玩的计数小游戏。
 
 **在线地址：<https://csypb123.github.io/>**
+**评分卡：<https://csypb123.github.io/scorecard.html>**（创新性 45 / 美观性 30 / 完整性 20 / 部署与可用性 5）
 
 ## 文件结构
 
@@ -14,7 +15,7 @@
 | `script.js` | 入口门、背景音乐、滚动动画与交互（原生 JS，无第三方库） |
 | `scorecard.html` | 评分卡：逐项打分依据、与参考站对比、待改进项 |
 | `counting-game.html` | 「数一数」限时计数小游戏（Canvas 手写，单文件零依赖） |
-| `assets/bg-fish.jpg` | 整页背景插画（压缩至 1280px 宽，约 230 KB） |
+| `assets/bg-light.jpg` | 整页背景插画（1280×1920，约 280 KB，用 multiply 混合融进白底） |
 | `assets/fishinthepool.mp3` | 背景音乐 |
 | `assets/favicon.svg` | 站点图标 |
 | `assets/landscape.svg` | 首页个人卡片里的「风景窗」插画 |
@@ -26,6 +27,7 @@
 - **入口门**：首次访问先看到一个「进入主页」页，并说明会播放背景音乐；也可以选择不播音乐直接浏览，选择会记在 localStorage 里。
 - **背景音乐**：右上角 BGM 按钮随时开关；「近况」版块里有一张播放卡，带播放/暂停、静音、重新开始、音量滑块，以及一块 **Canvas 实时频谱**（用 `AnalyserNode` 取频谱画柱状波形；没有音频上下文时自动退化成呼吸波形）。
 - **滚动动画**：逐字上浮、打字机、滚动显现、背景视差、时间线进度、技能条填充、卡片 3D 倾斜。
+- **背景处理**：插画用 `mix-blend-mode: multiply` 铺在白底上，画面清晰但插画自身的白底不会变成一块灰；再叠一层 `mix-blend-mode: color` 的蓝紫渐变统一色调，白色柔光保证正文对比度。
 - **性能取舍**：动画只用 `transform` 与 `opacity`；不用 `background-attachment: fixed`（改为固定定位图层），避免移动端掉帧。
 
 ## 小游戏：数一数
@@ -63,8 +65,8 @@ node preview-server.cjs
 ## 自定义
 
 - **文字**：改 `index.html`
-- **配色**：改 `styles.css` 里 `:root` 的 `--bg` / `--amber` / `--ember` / `--gold` / `--text`
-- **背景图**：换掉 `assets/bg-fish.jpg`，透明度与暖色叠加在 `.backdrop__art` / `.backdrop__wash`
+- **配色**：改 `styles.css` 里 `:root` 的 `--bg` / `--violet` / `--blue` / `--pink` / `--text`
+- **背景图**：换掉 `assets/bg-light.jpg`；画面对比度在 `.backdrop__wash`（白色柔光），插画混合方式在 `.backdrop__art`
 - **背景音乐**：换掉 `assets/fishinthepool.mp3`（`index.html` 里 `<audio id="bgm">` 的 `src`）
 - **打字机文案**：改 `script.js` 里的 `lines` 数组
 - **头像**：改 `index.html` 中 `.profile__avatar img` 的 `src`
