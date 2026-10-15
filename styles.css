@@ -222,6 +222,17 @@ html:not(.js) .js-only { display: none !important; }
 }
 .bgm-toggle:hover { background: #fff; color: var(--text); transform: translateY(-2px); }
 .bgm-toggle.is-playing { color: #fff; background: var(--grad); border-color: transparent; font-weight: 700; }
+/* 自动播放被浏览器拦下、暂时静音播放时的提示态 */
+.bgm-toggle.is-muted-auto {
+  color: var(--text); background: rgba(255, 255, 255, .94);
+  border-color: var(--violet); font-weight: 600;
+  animation: bgmHint 1.9s var(--ease-soft) infinite;
+}
+.bgm-toggle.is-muted-auto::after { content: "点击开启声音"; font-size: .78rem; margin-left: 2px; }
+@keyframes bgmHint {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(109, 77, 250, .35); }
+  50% { box-shadow: 0 0 0 6px rgba(109, 77, 250, 0); }
+}
 .bgm-toggle svg { width: 15px; height: 15px; flex: none; }
 .bgm-toggle__bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
 .bgm-toggle__bars i { width: 2.5px; height: 4px; border-radius: 2px; background: currentColor; }

@@ -142,7 +142,10 @@
       var playing = !audio.paused && !audio.ended;
       if (toggle) {
         toggle.classList.toggle('is-playing', playing);
+        // 自动播放受阻时会先静音播放，这里给出可见提示：点一下就能出声
+        toggle.classList.toggle('is-muted-auto', playing && audio.muted);
         toggle.setAttribute('aria-pressed', String(playing));
+        toggle.setAttribute('aria-label', playing && audio.muted ? '背景音乐已静音播放，点击开启声音' : '背景音乐开关');
       }
       if (card) card.classList.toggle('is-playing', playing);
       if (playBtn) playBtn.textContent = playing ? '⏸ 暂停' : '▶ 播放';
@@ -160,7 +163,57 @@
     function pause() { try { audio.pause(); } catch (e) {} syncUI(); }
     function flip() { if (audio.paused) play(); else pause(); }
 
-    // 入口门已移除：进来就是主页，背景音乐由右上角的 BGM 按钮控制
+    /* ---------------------------------------------------------
+       自动播放背景音乐
+       浏览器策略：没有用户交互时「有声播放」会被拒绝（NotAllowedError）。
+       所以按下面的顺序尽量自动放，放不了就退一步：
+         1) 直接有声自动播放 —— 浏览器允许时（常来的访客）立刻就响
+         2) 被拒 → 静音自动播放（这条通常允许），画面里有声音提示
+         3) 用户第一次点击/按键时自动取消静音，从 0 开始放
+       --------------------------------------------------------- */
+    function unmuteNow() {
+      audio.muted = false;
+      try { audio.currentTime = 0; } catch (e) {}
+      play();
+      save();
+    }
+    window.__bgmUnmute = unmuteNow;
+
+    var gestureArmed = false;
+    function armGestureOnce() {
+      if (gestureArmed) return;
+      gestureArmed = true;
+      var handler = function () {
+        document.removeEventListener('click', handler);
+        document.removeEventListener('keydown', handler);
+        if (audio.muted && !audio.paused) unmuteNow();
+      };
+      document.addEventListener('click', handler);
+      document.addEventListener('keydown', handler);
+    }
+
+    function autoStart() {
+      if (saved.muted) return;          // 用户明确关过声音，别自作主张
+      var p;
+      try { p = audio.play(); } catch (e) { p = null; }
+      if (!p || !p.then) return;
+      p.then(function () {
+        syncUI();                       // 有声自动播放成功
+      }).catch(function () {
+        // 有声被拒：先静音放起来，等第一次交互再出声
+        audio.muted = true;
+        syncUI();
+        var p2;
+        try { p2 = audio.play(); } catch (e) { p2 = null; }
+        if (p2 && p2.then) p2.then(function () { syncUI(); armGestureOnce(); }).catch(function () { audio.muted = !!saved.muted; syncUI(); });
+        else armGestureOnce();
+      });
+    }
+    if (saved.vol === undefined) {
+      // 首次访问音量给一个轻一点的默认值
+      audio.volume = 0.4;
+    }
+    autoStart();
 
     /* 播放 / 暂停 / 静音 / 音量 */
     if (toggle)  toggle.addEventListener('click', flip);
