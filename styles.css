@@ -96,14 +96,21 @@ html:not(.js) .js-only { display: none !important; }
 
 /* ---------------------------------------------------------
    2. 加载动画
+   关键：必须能在没有 JS 的情况下自己消失。
+   script.js 只负责「提前」移除它，CSS 动画保证它绝不会永久挡住页面。
    --------------------------------------------------------- */
 .preloader {
   position: fixed; inset: 0; z-index: 500;
   display: grid; place-items: center; gap: 18px;
   background: var(--bg);
   transition: opacity .7s var(--ease), visibility .7s;
+  /* 1.8s 后自动淡出并让出点击，不依赖任何脚本 */
+  animation: preloaderAway .7s ease 1.8s forwards;
 }
 .preloader.is-done { opacity: 0; visibility: hidden; }
+@keyframes preloaderAway {
+  to { opacity: 0; visibility: hidden; pointer-events: none; }
+}
 .preloader__ring {
   width: 54px; height: 54px; border-radius: 50%;
   border: 2px solid rgba(109, 77, 250, .18);
@@ -143,6 +150,7 @@ html:not(.js) .js-only { display: none !important; }
 }
 .gate__btn:hover { transform: translateY(-3px); box-shadow: 0 28px 56px -18px rgba(109, 77, 250, 1); }
 .gate__skip { display: block; margin-top: 16px; color: var(--text-3); font-size: .82rem; }
+.gate__hint { margin-top: 6px; color: var(--text-3); font-size: .78rem; opacity: .8; }
 
 /* ---------------------------------------------------------
    4. 滚动进度条
@@ -576,14 +584,19 @@ html:not(.js) .js-only { display: none !important; }
 
 /* ---------------------------------------------------------
    15. 滚动入场
+   入场动画同样是纯装饰，必须能自动兜底显示，
+   否则脚本一旦没跑到，整页内容会永远停在 opacity:0（看起来就是白屏）。
    --------------------------------------------------------- */
 .reveal {
   opacity: 0; transform: translateY(26px); filter: blur(5px);
   transition: opacity .9s var(--ease), transform 1s var(--ease), filter .9s var(--ease);
   transition-delay: var(--rv-delay, 0ms);
+  /* 脚本没接管时，用动画把内容显示出来（与 .is-in 同样的终态） */
+  animation: revealFallback .9s var(--ease) 2.4s forwards;
 }
-.reveal.is-in { opacity: 1; transform: none; filter: none; }
-html:not(.js) .reveal { opacity: 1; transform: none; filter: none; }
+.reveal.is-in { opacity: 1; transform: none; filter: none; animation: none; }
+@keyframes revealFallback { to { opacity: 1; transform: none; filter: none; } }
+html:not(.js) .reveal { opacity: 1; transform: none; filter: none; animation: none; }
 
 /* ---------------------------------------------------------
    16. 减少动态效果

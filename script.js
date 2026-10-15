@@ -152,31 +152,48 @@
       if (muteBtn) muteBtn.textContent = audio.muted ? '🔊 取消静音' : '🔇 静音';
     }
 
-    function play() { var p = audio.play(); if (p && p.catch) p.catch(function () {}); syncUI(); }
-    function pause() { audio.pause(); syncUI(); }
+    function play() {
+      // play() 在个别浏览器/权限策略下会同步抛错，不能让它把整个流程带崩
+      try {
+        var p = audio.play();
+        if (p && p.catch) p.catch(function () {});
+      } catch (e) {}
+      syncUI();
+    }
+    function pause() { try { audio.pause(); } catch (e) {} syncUI(); }
     function flip() { if (audio.paused) play(); else pause(); }
 
     /* 入口门 */
     if (gate) {
+      // 关门的动作写死在 finally 里：不管音乐能不能播，都必须能进门
+      function closeGate(withMusic) {
+        try { gate.classList.add('is-open'); } catch (e) {}
+        gateSkipped = true;
+        try { document.body.classList.remove('is-locked'); } catch (e) {}
+        window.setTimeout(function () { try { gate.hidden = true; } catch (e) {} }, 800);
+        if (withMusic) play();
+        try { save(); } catch (e) {}
+        // 外部脚本万一加载失败，内联兜底也必须知道门已经关了
+        window.__gateDone = true;
+      }
+
       if (gateSkipped) {
         gate.hidden = true;
+        window.__gateDone = true;
       } else {
         gate.hidden = false;
-        document.body.classList.add('is-locked');
-        var open = function (withMusic) {
-          gate.classList.add('is-open');
-          gateSkipped = true;
-          document.body.classList.remove('is-locked');
-          window.setTimeout(function () { gate.hidden = true; }, 800);
-          if (withMusic) play();
-          save();
-        };
-        if (enter) enter.addEventListener('click', function () { open(true); });
-        if (skip)  skip.addEventListener('click', function () { open(false); });
-        // 键盘用户也能快速离开
-        document.addEventListener('keydown', function (e) {
-          if (e.key === 'Escape' && !gate.hidden) open(false);
-        });
+        try { document.body.classList.add('is-locked'); } catch (e) {}
+        if (window.__gateBound) {
+          // 内联兜底已经绑过监听器，这里只把逻辑接过来
+          window.__closeGate = closeGate;
+        } else {
+          if (enter) enter.addEventListener('click', function () { closeGate(true); });
+          if (skip)  skip.addEventListener('click', function () { closeGate(false); });
+          document.addEventListener('keydown', function (e) {
+            if ((e.key === 'Escape' || e.key === 'Enter') && !gate.hidden) closeGate(false);
+          });
+          window.__closeGate = closeGate;
+        }
       }
     }
 
