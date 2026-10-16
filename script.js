@@ -123,8 +123,6 @@
     var card    = $('#bgmCard');
     var canvas  = $('#bgmWave');
     var bgmTip  = $('#bgmTip');
-    var gate    = $('#gate');
-    var gateNote = $('#gateNote');
     if (!audio) return;
 
     var STORE = 'ypb-bgm';
@@ -249,43 +247,11 @@
       audio.volume = 0.4;
     }
 
-    /* ---------------------------------------------------------
-       入口门：点是有效的用户手势，音乐才被允许播放
-       关门动作写在 try/finally 里，任何一步失败都不会把用户关在门外
-       --------------------------------------------------------- */
-    var gateTimer = null;
-    function closeGate(withMusic) {
-      window.__gateDone = true;
-      try {
-        if (gate) gate.classList.add('is-open');
-        document.body.classList.remove('is-locked');
-      } catch (e) {}
-      if (gateTimer) window.clearTimeout(gateTimer);
-      if (window.__gateTimer) window.clearTimeout(window.__gateTimer);   // 同时取消内联兜底的计时器
-      window.setTimeout(function () { try { if (gate) gate.hidden = true; } catch (e) {} }, 800);
-      if (withMusic) {
-        // 这一次调用带着用户手势，浏览器会放行播放
-        audio.muted = false;
-        save();
-        play();
-      }
-      syncUI();
-    }
-    window.__closeGate = closeGate;
+    /* 没有入口门：直接尝试自动播放（浏览器允许就直接响），
+       被拒时静音播放并提示，首次点击/按键即出声。 */
+    autoStart();
 
-    if (gate) {
-      window.__gateBound = true;
-      // 兜底：3.5 秒内没动静就自动进门（不播放，避免无手势时被浏览器拒绝）
-      gateTimer = window.setTimeout(function () { if (!gate.hidden) closeGate(false); }, 3500);
-      window.__gateTimer = gateTimer;
-      preloadAudio();   // 在门口停留的这几秒就把音乐预载好，进门即出声
-      if (gateNote) gateNote.textContent = '进入后播放背景音乐 · 右上角可随时关闭';
-    } else {
-      // 没有门（例如浏览器缓存了旧版 HTML）时，退回到自动播放尝试
-      autoStart();
-    }
-
-    /* 页面稍稳定后就开始预载（没有门的情况下由轮询兜底） */
+    /* 页面稍稳定后就开始预载，让点播放时是瞬时响应 */
     function schedulePreload() {
       window.setTimeout(function () {
         if (window.requestIdleCallback) window.requestIdleCallback(function () { preloadAudio(); }, { timeout: 1500 });
