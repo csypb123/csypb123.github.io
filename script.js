@@ -222,24 +222,73 @@
     }
     window.__bgmUnmute = unmuteNow;
 
-    var gestureArmed = false;
-    function armGestureOnce() {
-      if (gestureArmed) return;
-      gestureArmed = true;
-      var handler = function () {
-        document.removeEventListener('click', handler);
-        document.removeEventListener('keydown', handler);
-        if (audio.muted && !audio.paused) unmuteNow();
+    /* ---------------------------------------------------------
+       首次交互 → 开始/恢复播放
+       实测：Chrome 只认「点击 / 按键」这类用户激活，滚动与触摸滑动不算。
+       所以滚动会尝试一次（部分浏览器认），点击/按键作为可靠兜底。
+       --------------------------------------------------------- */
+    var gestureDone = false;
+    var scrollGestureBound = false;
+
+    function activateBgm(why) {
+      if (gestureDone) return;
+      if (saved.muted) { gestureDone = true; return; }   // 用户明确关过声音，别自作主张
+      gestureDone = true;
+      audio.muted = false;
+      var wasPaused = audio.paused;
+      play();
+      if (wasPaused) {
+        // 从头开始，观感更自然
+        try { audio.currentTime = 0; } catch (e) {}
+      }
+      save();
+      if (window.console && console.debug) console.debug('[bgm] 由「' + why + '」触发播放');
+    }
+
+    function armFirstGestures() {
+      if (gestureDone) return;
+      var onClick = function () { activateBgm('点击'); cleanup(); };
+      var onKey = function () { activateBgm('按键'); cleanup(); };
+      var onScroll = function () {
+        // 只有真的往下滚了一段才尝试，避免页面初始化时的微小滚动
+        if (window.pageYOffset < 90) return;
+        var before = audio.paused;
+        audio.muted = false;
+        play();
+        if (before && !audio.paused) {
+          // 这个浏览器认滚动，播放成功
+          gestureDone = true;
+          save();
+          cleanup();
+        } else {
+          // 被策略拒绝：保留监听，等点击/按键
+          cleanupScroll();
+        }
       };
-      document.addEventListener('click', handler);
-      document.addEventListener('keydown', handler);
+      function cleanup() {
+        document.removeEventListener('click', onClick);
+        document.removeEventListener('keydown', onKey);
+        cleanupScroll();
+      }
+      function cleanupScroll() {
+        if (scrollGestureBound) {
+          window.removeEventListener('scroll', onScroll);
+          scrollGestureBound = false;
+        }
+      }
+      document.addEventListener('click', onClick);
+      document.addEventListener('keydown', onKey);
+      if (!scrollGestureBound) {
+        scrollGestureBound = true;
+        window.addEventListener('scroll', onScroll, { passive: true });
+      }
     }
 
     function autoStart() {
       if (saved.muted) return;          // 用户明确关过声音，别自作主张
       var p;
       try { p = audio.play(); } catch (e) { p = null; }
-      if (!p || !p.then) return;
+      if (!p || !p.then) { armFirstGestures(); return; }
       p.then(function () {
         syncUI();                       // 有声自动播放成功
       }).catch(function () {
@@ -248,8 +297,14 @@
         syncUI();
         var p2;
         try { p2 = audio.play(); } catch (e) { p2 = null; }
-        if (p2 && p2.then) p2.then(function () { syncUI(); armGestureOnce(); }).catch(function () { audio.muted = !!saved.muted; syncUI(); });
-        else armGestureOnce();
+        if (p2 && p2.then) {
+          p2.then(function () { syncUI(); if (!gestureDone) armFirstGestures(); })
+            .catch(function () { audio.muted = !!saved.muted; syncUI(); if (!gestureDone) armFirstGestures(); });
+        } else {
+          audio.muted = !!saved.muted;
+          syncUI();
+          if (!gestureDone) armFirstGestures();
+        }
       });
     }
     if (saved.vol === undefined) {
@@ -258,7 +313,7 @@
     }
 
     /* 没有入口门：直接尝试自动播放（浏览器允许就直接响），
-       被拒时静音播放并提示，首次点击/按键即出声。 */
+       被拒时静音播放并提示，之后滚动/点击/按键都会把它放出来。 */
     autoStart();
 
     /* 页面稍稳定后就开始预载，让点播放时是瞬时响应 */
