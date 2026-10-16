@@ -17,29 +17,65 @@
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
-<link rel="stylesheet" href="styles.css?v=20261023">
+<link rel="stylesheet" href="styles.css?v=20261024">
 <script>document.documentElement.className += ' js';</script>
 </head>
 <body>
 
-<!-- 加载动画 -->
-<div id="preloader" class="preloader">
-  <div class="preloader__ring"></div>
-  <p class="preloader__text">正在加载……</p>
+<!-- 开场加载动画：品牌字标 + 进度条 + 名字逐字浮现。
+     加载期间锁滚动，结束后触发页面的入场动画。 -->
+<div id="preloader" class="preloader" role="status" aria-live="polite" aria-label="正在加载">
+  <div class="preloader__inner">
+    <div class="preloader__mark">杨</div>
+    <p class="preloader__hello">PERSONAL FIELD NOTES</p>
+    <p class="preloader__name">杨鹏博</p>
+    <div class="preloader__bar"><i></i></div>
+    <p class="preloader__hint" id="plHint">正在准备页面</p>
+  </div>
 </div>
+<script>document.body.classList.add('is-locked');</script>
 
 <!-- 兜底脚本：保证加载动画一定消失。
      放在这里是为了让 script.js 尚未加载完（或被缓存阻断）时页面已经可用。 -->
 <script>
 (function () {
   var pl = document.getElementById('preloader');
-  function killPreloader() {
-    if (!pl) return;
-    pl.classList.add('is-done');
-    setTimeout(function () { try { if (pl.parentNode) pl.parentNode.removeChild(pl); } catch (e) {} }, 800);
+  var hint = document.getElementById('plHint');
+  var MIN_MS = 700;                    // 太短会闪一下，反而像卡顿
+  var started = Date.now();
+  var closed = false;
+
+  function dismiss() {
+    if (closed || !pl) return;
+    closed = true;
+    var left = Math.max(0, MIN_MS - (Date.now() - started));
+    window.setTimeout(function () {
+      pl.classList.add('is-done');
+      document.body.classList.remove('is-locked');
+      // 通知页面：可以播放入场动画了
+      try {
+        window.dispatchEvent(new CustomEvent('ypb:loaded'));
+      } catch (e) {}
+      window.setTimeout(function () {
+        try { if (pl.parentNode) pl.parentNode.removeChild(pl); } catch (e) {}
+      }, 700);
+    }, left);
   }
-  setTimeout(killPreloader, 2500);
-  window.addEventListener('load', function () { setTimeout(killPreloader, 400); });
+
+  // 让进度条有个推进的过程；真实加载进度浏览器不对外暴露，这里按时间推进到 92%
+  var p = 0;
+  var timer = window.setInterval(function () {
+    p = Math.min(92, p + Math.random() * 18 + 6);
+    if (pl) pl.style.setProperty('--p', p + '%');
+    if (hint) hint.textContent = p < 55 ? '正在准备页面' : (p < 90 ? '正在加载插画与音乐' : '马上就好');
+    if (p >= 92) window.clearInterval(timer);
+  }, 190);
+
+  if (document.readyState === 'complete') dismiss();
+  else window.addEventListener('load', dismiss);
+
+  // 兜底：无论加载是否完成，最多 2.2 秒也要放人进去
+  window.setTimeout(dismiss, 2200);
 })();
 </script>
 
@@ -620,6 +656,6 @@
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
 </button>
 
-<script src="script.js?v=20261023"></script>
+<script src="script.js?v=20261024"></script>
 </body>
 </html>

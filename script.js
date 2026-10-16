@@ -19,19 +19,29 @@
   });
 
   /* ---------------------------------------------------------
-     1. 加载动画
+     1. 开场加载 → 入场
+     加载层的显示/隐藏由 index.html 里的内联脚本负责（这样 script.js
+     没加载成功也不会卡住）。这里只负责接住「加载完成」的信号，
+     然后给 <html> 加上 is-ready，触发首屏的入场动画。
      --------------------------------------------------------- */
-  var preloader = $('#preloader');
-  function hidePreloader() {
-    if (!preloader) return;
-    preloader.classList.add('is-done');
+  var preloaderEl = $('#preloader');
+  var entranceDone = false;
+
+  function startEntrance() {
+    if (entranceDone) return;
+    entranceDone = true;
+    // 入场动画全部限定在 html.is-ready 下，所以到点移除这个 class 即可
+    // 干净地退回常态（不写任何内联样式，避免和视差/滚动显现抢 opacity）
+    document.documentElement.classList.add('is-ready');
     window.setTimeout(function () {
-      if (preloader.parentNode) preloader.parentNode.removeChild(preloader);
-    }, 800);
+      document.documentElement.classList.remove('is-ready');
+    }, 1400);
   }
-  window.addEventListener('load', function () { window.setTimeout(hidePreloader, 380); });
-  // 兜底：无论如何 2.5s 后关闭
-  window.setTimeout(hidePreloader, 2500);
+
+  window.addEventListener('ypb:loaded', startEntrance);
+  // 加载层可能已经让开了（脚本晚到）或干脆不存在，兜底也要入场
+  window.setTimeout(startEntrance, 2800);
+  if (!preloaderEl) startEntrance();
 
   /* ---------------------------------------------------------
      2. 标题逐字上浮

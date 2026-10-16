@@ -95,28 +95,93 @@ html:not(.js) .js-only { display: none !important; }
 .skip:focus { top: 14px; }
 
 /* ---------------------------------------------------------
-   2. 加载动画
-   关键：必须能在没有 JS 的情况下自己消失。
-   script.js 只负责「提前」移除它，CSS 动画保证它绝不会永久挡住页面。
+   2. 开场加载动画
+   两条底线：
+   ① 不依赖 JS 也能自己消失（CSS 动画兜底），绝不会永久挡住页面；
+   ② 页面锁滚动的状态由内联脚本加上，消失时必定解除。
    --------------------------------------------------------- */
 .preloader {
   position: fixed; inset: 0; z-index: 500;
-  display: grid; place-items: center; gap: 18px;
-  background: var(--bg);
-  transition: opacity .7s var(--ease), visibility .7s;
-  /* 1.8s 后自动淡出并让出点击，不依赖任何脚本 */
-  animation: preloaderAway .7s ease 1.8s forwards;
+  display: grid; place-items: center; padding: 24px;
+  --p: 6%;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(109, 77, 250, .12), transparent 60%),
+    var(--bg);
+  transition: opacity .6s var(--ease), visibility .6s;
+  /* CSS 兜底：2.6s 后自动淡出并让出点击，即使脚本完全没跑到 */
+  animation: preloaderAway .6s ease 2.6s forwards;
 }
 .preloader.is-done { opacity: 0; visibility: hidden; }
 @keyframes preloaderAway { to { opacity: 0; visibility: hidden; pointer-events: none; } }
-.preloader__ring {
-  width: 54px; height: 54px; border-radius: 50%;
-  border: 2px solid rgba(109, 77, 250, .18);
-  border-top-color: var(--violet);
-  animation: spin 1s linear infinite;
+
+.preloader__inner { text-align: center; }
+.preloader__mark {
+  width: 60px; height: 60px; margin: 0 auto; border-radius: 18px;
+  display: grid; place-items: center; font-weight: 800; font-size: 1.5rem; color: #fff;
+  background: var(--grad); box-shadow: 0 20px 44px -20px rgba(109, 77, 250, .95);
+  animation: markIn .7s var(--ease) both;
 }
-.preloader__text { color: var(--text-3); font-size: .84rem; letter-spacing: .18em; }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes markIn {
+  from { opacity: 0; transform: translateY(12px) scale(.86); }
+  to   { opacity: 1; transform: none; }
+}
+.preloader__hello {
+  margin-top: 18px; font-size: .64rem; letter-spacing: .34em; text-transform: uppercase;
+  color: var(--text-3);
+}
+/* 名字逐字浮现：用渐变裁剪 + 背景位移做出扫光 */
+.preloader__name {
+  margin-top: 8px; font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 800; letter-spacing: .04em;
+  background-image: linear-gradient(100deg,
+    rgba(21, 26, 46, .5) 0%, rgba(21, 26, 46, .5) 30%,
+    rgba(21, 26, 46, .95) 44%,
+    #6d4dfa 52%, #c026d3 60%,
+    rgba(21, 26, 46, .95) 70%,
+    rgba(21, 26, 46, .5) 84%, rgba(21, 26, 46, .5) 100%);
+  background-size: 240% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: nameSweep 1.5s var(--ease) .1s infinite;
+}
+@keyframes nameSweep {
+  from { background-position: 130% 0; }
+  to   { background-position: -40% 0; }
+}
+.preloader__bar {
+  position: relative; width: min(240px, 62vw); height: 3px; margin: 22px auto 0;
+  border-radius: 999px; background: rgba(21, 26, 46, .09); overflow: hidden;
+}
+.preloader__bar i {
+  position: absolute; left: 0; top: 0; bottom: 0; width: var(--p);
+  border-radius: 999px; background: var(--grad);
+  box-shadow: 0 0 12px rgba(109, 77, 250, .6);
+  transition: width .4s var(--ease);
+}
+.preloader__hint { margin-top: 12px; font-size: .74rem; letter-spacing: .14em; color: var(--text-3); }
+
+/* ---------------------------------------------------------
+   2b. 入场动画（等加载层让开后再播，避免两层动画打架）
+   --------------------------------------------------------- */
+body.is-locked { overflow: hidden; }
+
+/* 进场：还没收到「加载完成」信号时，先等一等（时长与加载层的兜底一致） */
+.reveal { animation: revealFallback .8s var(--ease) 2.7s forwards; }
+@keyframes revealFallback { to { opacity: 1; transform: none; filter: none; } }
+/* 收到信号后，首屏按顺序依次浮现 */
+html.is-ready .hero__text .reveal { animation: heroIn .85s var(--ease) .1s both; }
+html.is-ready .hero__text .reveal:nth-child(2) { animation-delay: .17s; }
+html.is-ready .hero__text .reveal:nth-child(3) { animation-delay: .24s; }
+html.is-ready .hero__text .reveal:nth-child(4) { animation-delay: .31s; }
+html.is-ready .hero__text .reveal:nth-child(5) { animation-delay: .38s; }
+html.is-ready .hero__card { animation: heroCardIn 1s var(--ease) .32s both; }
+@keyframes heroIn {
+  from { opacity: 0; transform: translateY(16px); filter: blur(6px); }
+  to   { opacity: 1; transform: none; filter: none; }
+}
+@keyframes heroCardIn {
+  from { opacity: 0; transform: translateY(22px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
 
 /* ---------------------------------------------------------
    4. 滚动进度条
@@ -579,8 +644,12 @@ html:not(.js) .reveal { opacity: 1; transform: none; filter: none; animation: no
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
   html { scroll-behavior: auto; }
-  .reveal { opacity: 1; transform: none; filter: none; }
+  .reveal { opacity: 1; transform: none; filter: none; animation: none; }
   .backdrop__blob { animation: none; }
+  /* 减少动态效果时，加载层立刻让开 */
+  .preloader { animation-delay: .2s !important; }
+  .preloader__mark, .preloader__name { animation: none; }
+  .preloader__name { background: none; -webkit-text-fill-color: var(--text); color: var(--text); }
 }
 
 /* ---------------------------------------------------------
