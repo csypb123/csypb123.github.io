@@ -17,7 +17,7 @@
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/favicon.svg">
-<link rel="stylesheet" href="styles.css?v=20261024">
+<link rel="stylesheet" href="styles.css?v=20261025">
 <script>document.documentElement.className += ' js';</script>
 </head>
 <body>
@@ -41,14 +41,17 @@
 (function () {
   var pl = document.getElementById('preloader');
   var hint = document.getElementById('plHint');
-  var MIN_MS = 700;                    // 太短会闪一下，反而像卡顿
-  var started = Date.now();
+  // 至少展示这么久：太短会「闪一下」，反而像卡顿或出错
+  var MIN_MS = 820;
+  var started = (window.performance && performance.now) ? performance.now() : Date.now();
   var closed = false;
+
+  function now() { return (window.performance && performance.now) ? performance.now() : Date.now(); }
 
   function dismiss() {
     if (closed || !pl) return;
     closed = true;
-    var left = Math.max(0, MIN_MS - (Date.now() - started));
+    var left = Math.max(0, MIN_MS - (now() - started));
     window.setTimeout(function () {
       pl.classList.add('is-done');
       document.body.classList.remove('is-locked');
@@ -74,8 +77,8 @@
   if (document.readyState === 'complete') dismiss();
   else window.addEventListener('load', dismiss);
 
-  // 兜底：无论加载是否完成，最多 2.2 秒也要放人进去
-  window.setTimeout(dismiss, 2200);
+  // 兜底：无论加载是否完成，最多 2.4 秒也要放人进去
+  window.setTimeout(dismiss, 2400);
 })();
 </script>
 
@@ -656,6 +659,6 @@
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
 </button>
 
-<script src="script.js?v=20261024"></script>
+<script src="script.js?v=20261025"></script>
 </body>
 </html>
