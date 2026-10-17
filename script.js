@@ -675,7 +675,60 @@
   }
 
   /* ---------------------------------------------------------
-     9. 页脚年份
+     9. 联系方式：一键复制
+     优先用 Clipboard API（需要 HTTPS + 用户手势），
+     失败时退回到 textarea + execCommand 这套老办法。
+     --------------------------------------------------------- */
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '-1000px';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, text.length);
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        ok ? resolve() : reject(new Error('execCommand failed'));
+      } catch (e) { reject(e); }
+    });
+  }
+
+  $$('[data-copy]').forEach(function (target) {
+    var isButton = target.tagName === 'BUTTON';
+    if (!isButton) return;                       // 只给「复制」按钮绑定
+
+    var timer = null;
+    target.addEventListener('click', function () {
+      var text = target.getAttribute('data-copy');
+      if (!text) return;
+      if (timer) window.clearTimeout(timer);
+      target.classList.remove('is-copied', 'is-failed');
+
+      copyText(text).then(function () {
+        target.textContent = '已复制';
+        target.classList.add('is-copied');
+      }).catch(function () {
+        target.textContent = '复制失败';
+        target.classList.add('is-failed');
+      }).then(function () {
+        timer = window.setTimeout(function () {
+          target.textContent = '复制';
+          target.classList.remove('is-copied', 'is-failed');
+        }, 1600);
+      });
+    });
+  });
+
+  /* ---------------------------------------------------------
+     10. 页脚年份
      --------------------------------------------------------- */
   var yearEl = $('#year');
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
