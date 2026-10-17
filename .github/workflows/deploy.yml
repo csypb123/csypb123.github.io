@@ -1,4 +1,7 @@
-name: Deploy personal homepage to GitHub Pages
+name: Legacy root redirect
+# 这个仓库原先是「用户站点」(csypb123.github.io 根目录)。
+# 主页已迁移到项目站点 csypb123/my-intro（网址 /my-intro/）。
+# 这里只发布一个跳转页，让旧链接继续可用，不再重复托管整站内容。
 on:
   push:
     branches: [main]
@@ -23,12 +26,11 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Assemble static site
+      - name: Assemble redirect-only site
         run: |
           mkdir _site
-          cp index.html 2048.html styles.css script.js .nojekyll _site/
-          cp -r assets _site/assets
-          cp README.md _site/README.md
+          cp index.html _site/index.html
+          touch _site/.nojekyll
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
