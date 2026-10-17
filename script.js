@@ -135,12 +135,61 @@
     var bgmTip  = $('#bgmTip');
     if (!audio) return;
 
+    /* ---------------------------------------------------------
+       AudioContext 音频图：必须「懒创建」
+       一旦调用 createMediaElementSource()，音频输出就只走这条链；
+       而没有用户手势时创建的 AudioContext 处于 suspended 状态，
+       结果就是「进度在前走、却完全没有声音」。
+       所以等第一次真实手势（点击/按键/触摸）再建图，并反复尝试 resume。
+       --------------------------------------------------------- */
+    var ac = null, analyser = null, freq = null, graphTried = false;
+
+    function resumeGraph() {
+      if (!ac) return;
+      if (ac.state === 'suspended') { try { ac.resume(); } catch (e) {} }
+    }
+
+    function ensureGraph() {
+      if (graphTried) { resumeGraph(); return; }
+      graphTried = true;
+      if (!canvas) return;
+      try {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        ac = new AC();
+        var node = ac.createMediaElementSource(audio);
+        analyser = ac.createAnalyser();
+        analyser.fftSize = 128;
+        analyser.smoothingTimeConstant = 0.82;
+        node.connect(analyser);
+        analyser.connect(ac.destination);
+        freq = new Uint8Array(analyser.frequencyBinCount);
+      } catch (e) { analyser = null; }
+      resumeGraph();
+    }
+
+    ['pointerdown', 'keydown', 'touchstart'].forEach(function (evName) {
+      document.addEventListener(evName, function () { ensureGraph(); resumeGraph(); }, { passive: true });
+    });
+
+
     var STORE = 'ypb-bgm';
     var saved = {};
     try { saved = JSON.parse(localStorage.getItem(STORE) || '{}') || {}; } catch (e) { saved = {}; }
+
+    /* muted 只代表「用户明确关掉了声音」。
+       自动播放被拒时浏览器会让元素进入临时静音，那不算用户选择，
+       绝不能写进 localStorage —— 否则下次打开会永久没声音。 */
+    var userMuted = !!saved.muted;
+
+    /* 音量兜底：曾经把滑块拖到 0 也会造成「没声音」，这里恢复默认值 */
+    var DEFAULT_VOL = 0.45;
+    var initialVol = (typeof saved.vol === 'number' && saved.vol > 0.02)
+      ? Math.min(saved.vol, 1) : DEFAULT_VOL;
+
     function save() {
       try {
-        localStorage.setItem(STORE, JSON.stringify({ muted: audio.muted, vol: audio.volume }));
+        localStorage.setItem(STORE, JSON.stringify({ muted: !!userMuted, vol: audio.volume }));
       } catch (e) {}
     }
 
@@ -176,8 +225,8 @@
       });
     }
 
-    audio.volume = typeof saved.vol === 'number' ? saved.vol : 0.45;
-    audio.muted  = !!saved.muted;
+    audio.volume = initialVol;
+    audio.muted  = userMuted;
     if (vol) vol.value = Math.round(audio.volume * 100);
     if (volText) volText.textContent = Math.round(audio.volume * 100) + '%';
 
@@ -204,7 +253,13 @@
       syncUI();
     }
     function pause() { try { audio.pause(); } catch (e) {} syncUI(); }
-    function flip() { if (audio.paused) play(); else pause(); }
+
+    /* 点播放按钮时，如果处于静音状态就顺手放开声音：
+       按钮上写着「点击开启声音」，点了却没声，那是骗人的。 */
+    function flip() {
+      if (audio.muted) { audio.muted = false; userMuted = false; save(); }
+      if (audio.paused) play(); else pause();
+    }
 
     /* ---------------------------------------------------------
        自动播放背景音乐
@@ -222,6 +277,22 @@
     }
     window.__bgmUnmute = unmuteNow;
 
+    /* 只读调试口：排查「在播但没声音」时很有用（AudioContext 挂起是常见元凶） */
+    window.__bgmDebug = function () {
+      return {
+        acState: ac ? ac.state : 'none',
+        hasGraph: graphTried,
+        hasAnalyser: !!analyser,
+        paused: audio.paused,
+        muted: audio.muted,
+        userMuted: userMuted,
+        volume: audio.volume,
+        readyState: audio.readyState,
+        currentTime: Math.round(audio.currentTime * 100) / 100,
+        usingBlob: (audio.currentSrc || '').indexOf('blob:') === 0
+      };
+    };
+
     /* ---------------------------------------------------------
        首次交互 → 开始/恢复播放
        实测：Chrome 只认「点击 / 按键」这类用户激活，滚动与触摸滑动不算。
@@ -232,9 +303,10 @@
 
     function activateBgm(why) {
       if (gestureDone) return;
-      if (saved.muted) { gestureDone = true; return; }   // 用户明确关过声音，别自作主张
+      if (userMuted) { gestureDone = true; return; }   // 用户明确关过声音，别自作主张
       gestureDone = true;
       audio.muted = false;
+      ensureGraph();                                   // 借这次手势把音频图跑起来
       var wasPaused = audio.paused;
       play();
       if (wasPaused) {
@@ -285,7 +357,7 @@
     }
 
     function autoStart() {
-      if (saved.muted) return;          // 用户明确关过声音，别自作主张
+      if (userMuted) return;          // 用户明确关过声音，别自作主张
       var p;
       try { p = audio.play(); } catch (e) { p = null; }
       if (!p || !p.then) { armFirstGestures(); return; }
@@ -293,15 +365,15 @@
         syncUI();                       // 有声自动播放成功
       }).catch(function () {
         // 有声被拒：先静音放起来，等第一次交互再出声
-        audio.muted = true;
+        audio.muted = true;   // 仅临时静音，不落库（userMuted 仍为 false）
         syncUI();
         var p2;
         try { p2 = audio.play(); } catch (e) { p2 = null; }
         if (p2 && p2.then) {
           p2.then(function () { syncUI(); if (!gestureDone) armFirstGestures(); })
-            .catch(function () { audio.muted = !!saved.muted; syncUI(); if (!gestureDone) armFirstGestures(); });
+            .catch(function () { audio.muted = userMuted; syncUI(); if (!gestureDone) armFirstGestures(); });
         } else {
-          audio.muted = !!saved.muted;
+          audio.muted = userMuted;
           syncUI();
           if (!gestureDone) armFirstGestures();
         }
@@ -342,12 +414,16 @@
     /* 播放 / 暂停 / 静音 / 音量 */
     if (toggle)  toggle.addEventListener('click', flip);
     if (playBtn) playBtn.addEventListener('click', flip);
-    if (muteBtn) muteBtn.addEventListener('click', function () { audio.muted = !audio.muted; syncUI(); save(); });
+    if (muteBtn) muteBtn.addEventListener('click', function () {
+      audio.muted = !audio.muted;
+      userMuted = audio.muted;
+      syncUI(); save();
+    });
     if (restart) restart.addEventListener('click', function () { try { audio.currentTime = 0; } catch (e) {} play(); });
     if (vol) vol.addEventListener('input', function () {
       audio.volume = Math.min(Math.max(parseInt(vol.value, 10) / 100 || 0, 0), 1);
       if (volText) volText.textContent = Math.round(audio.volume * 100) + '%';
-      if (audio.volume > 0 && audio.muted) audio.muted = false;
+      if (audio.volume > 0 && audio.muted) { audio.muted = false; userMuted = false; }
       syncUI(); save();
     });
     if (volText && vol) volText.textContent = Math.round(audio.volume * 100) + '%';
@@ -359,27 +435,10 @@
     audio.addEventListener('ended', function () { play(); });
     syncUI();
 
-    /* 波形可视化：AnalyserNode 接入 MediaElementSource。
-       若浏览器不支持（或创建失败），退化为一条呼吸的静态波形。 */
+    /* 波形可视化：直接用上面懒创建好的 analyser。
+       没有音频图（浏览器不支持 / 还没建）时，退化为一条呼吸的静态波形。 */
     if (!canvas) return;
     var ctx = canvas.getContext('2d');
-    var analyser = null, freq = null, ac = null;
-    try {
-      var AC = window.AudioContext || window.webkitAudioContext;
-      if (AC) {
-        ac = new AC();
-        var src = ac.createMediaElementSource(audio);
-        analyser = ac.createAnalyser();
-        analyser.fftSize = 128;
-        analyser.smoothingTimeConstant = 0.82;
-        src.connect(analyser);
-        analyser.connect(ac.destination);
-        freq = new Uint8Array(analyser.frequencyBinCount);
-      }
-    } catch (e) { analyser = null; }
-    if (analyser) {
-      audio.addEventListener('play', function () { if (ac && ac.state === 'suspended') ac.resume(); });
-    }
 
     var W = 0, H = 0;
     function fit() {
