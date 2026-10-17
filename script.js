@@ -653,18 +653,26 @@
     if (nav) nav.classList.toggle('is-stuck', y > 18);
     if (toTop) toTop.classList.toggle('is-on', y > vh * 0.7);
 
-    /* 首屏视差淡出 */
+    /* 首屏视差淡出
+       关键：用「首屏自身被推出视口的比例」来算，而不是滚动距离。
+       否则从下面滚回来时，首屏明明还有大半在视野里，却已经淡到几乎看不见
+       （表现为「第一张卡片发白发虚」）。
+       阶段划分：前 45% 完全不透明；之后才逐渐淡出，且不模糊文字。 */
     if (!reduceMotion && heroSec) {
-      var hp = Math.min(y / (vh * 0.95), 1);
-      var fade = 1 - hp;
-      if (heroText && hp < 1.05) {
-        heroText.style.transform = 'translate3d(0,' + (-y * 0.16) + 'px,0) scale(' + (1 - hp * 0.05) + ')';
-        heroText.style.opacity = Math.max(fade, 0);
-        heroText.style.filter = hp > 0.55 ? 'blur(' + ((hp - 0.55) * 12).toFixed(2) + 'px)' : '';
+      var hr = heroSec.getBoundingClientRect();
+      var heroH = hr.height || vh;
+      var gone = Math.min(Math.max(-hr.top / Math.max(heroH, 1), 0), 1);
+      var fadeAmt = gone <= 0.45 ? 0 : (gone - 0.45) / 0.55;
+      var heroOpacity = (1 - fadeAmt * 0.92).toFixed(3);
+
+      if (heroText) {
+        heroText.style.transform = 'translate3d(0,' + (-gone * heroH * 0.1).toFixed(1) + 'px,0) scale(' + (1 - gone * 0.04).toFixed(3) + ')';
+        heroText.style.opacity = heroOpacity;
+        heroText.style.filter = '';
       }
-      if (heroCard && hp < 1.05) {
-        heroCard.style.transform = 'translate3d(0,' + (-y * 0.06) + 'px,0)';
-        heroCard.style.opacity = Math.max(1 - hp * 0.85, 0);
+      if (heroCard) {
+        heroCard.style.transform = 'translate3d(0,' + (-gone * heroH * 0.04).toFixed(1) + 'px,0)';
+        heroCard.style.opacity = heroOpacity;
       }
       /* 背景光斑轻微反向移动 */
       var b1 = $('.backdrop__blob--1'), b2 = $('.backdrop__blob--2');
